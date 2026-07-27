@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["GetNetworkDataModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.getnetworkdata.GetNetworkDataModule"]
+  }
+}

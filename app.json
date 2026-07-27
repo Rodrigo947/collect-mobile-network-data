@@ -17,6 +17,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.dataflowing.collectmobilenetworkdata",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -37,6 +38,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "04be3c2f-b2f9-4594-a384-adbc426107f9"
+      }
+    },
+    "owner": "flowing"
   }
 }

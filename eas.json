@@ -1,0 +1,29 @@
+{
+  "cli": {
+    "version": ">= 21.3.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "node": "24.8.0",
+      "yarn": "1.22.22"
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "android": {
+        "distribution": "internal",
+        "withoutCredentials": true
+      }
+    },
+    "production": {
+      "extends": "base",
+      "developmentClient": false,
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {},
+    "development": {}
+  }
+}
