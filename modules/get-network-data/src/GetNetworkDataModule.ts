@@ -1,7 +1,8 @@
 import { NativeModule, requireNativeModule } from "expo";
+import { NetworkData } from "./GetNetworkData.types";
 
 declare class GetNetworkDataModule extends NativeModule<{}> {
-  getData(): Promise<string>;
+  getData(): Promise<NetworkData>;
 }
 
 export default requireNativeModule<GetNetworkDataModule>("GetNetworkData");
