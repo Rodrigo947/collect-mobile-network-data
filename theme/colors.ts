@@ -1,0 +1,26 @@
+const Colors = {
+    primary: '#2563EB',
+    primaryDark: '#1D4ED8',
+    secondary: '#22C55E',
+    background: '#F4F7FB',
+    backgroundLight: '#fafafa',
+    backgroundLightGray: '#d3d3d3',
+    navigationBackground: '#0F172A',
+    backgroundButtonStart: '#38ba7d',
+    backgroundButtonStop: '#e94942',
+    shadow: '#102A43',
+    textLabel: '#4e6072',
+    borderColor: '#64748B',
+    surface: '#FFFFFF',
+    success: '#22C55E',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    border: '#E2E8F0',
+    text: '#13203f',
+    textLight: '#E2E8F0',
+    textSecondary: '#64748B',
+    disabled: '#CBD5E1',
+    white: '#FFFFFF',
+};
+
+export default Colors;
