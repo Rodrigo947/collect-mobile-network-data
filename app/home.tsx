@@ -12,6 +12,7 @@ import AppHeader from '../components/layout/AppHeader';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import { useLocation } from '../hooks/useLocation';
 import { useNetworkMetrics } from '../hooks/useNetworkMetrics';
+import { useSensor } from '../hooks/useSensor';
 import StorageService from '../services/storage';
 import useHomeStyleScreen from '../styles/homeStyleScreen';
 import { CellMetricsData } from '../types/network';
@@ -47,6 +48,13 @@ export default function HomeScreen() {
         refresh: refreshNetwork,
     } = useNetworkMetrics();
 
+    const {
+        accelerometer,
+        gyroscope,
+        error,
+        refresh: refreshSensor,
+    } = useSensor();
+
     const handleStartCollecting = () => {
         if (isCollecting) {
             setIsCollecting(false);
@@ -77,14 +85,13 @@ export default function HomeScreen() {
     useEffect(() => {
         if (isCollecting) {
             intervalRef.current = setInterval(async () => {
-                const [newLocation, newSnapshot] = await Promise.all([
-                    refreshLocation(),
-                    refreshNetwork(),
-                ]);
+                const [newLocation, newSnapshot, newMotion] = await Promise.all(
+                    [refreshLocation(), refreshNetwork(), refreshSensor()],
+                );
 
                 setSeconds(prev => prev + 1);
 
-                if (!newLocation || !newSnapshot) {
+                if (!newLocation || !newSnapshot || !newMotion) {
                     return;
                 }
 
@@ -102,6 +109,7 @@ export default function HomeScreen() {
                 const newSample: SampleData = {
                     timestamp: Date.now(),
                     location: newLocation,
+                    motion: newMotion,
                     servingCell: serving,
                     neighboringCells: neighboring,
                 };

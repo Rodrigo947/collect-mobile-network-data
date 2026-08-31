@@ -1,5 +1,5 @@
-import Geolocation from 'react-native-geolocation-service';
 import { PermissionsAndroid, Platform } from 'react-native';
+import Geolocation from 'react-native-geolocation-service';
 import { LocationData } from '../types/location';
 
 async function requestPermission(): Promise<boolean> {
@@ -23,6 +23,11 @@ export async function getCurrentLocation(): Promise<LocationData> {
                 resolve({
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
+                    altitude: position.coords.altitude,
+                    accuracy: position.coords.accuracy,
+                    altitudeAccuracy: position.coords.altitudeAccuracy,
+                    speed: position.coords.speed,
+                    heading: position.coords.heading,
                 });
             },
 

@@ -7,7 +7,7 @@ import {
     StatusBar,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import AppButton from '../components/buttons/AppButton';
 import OnBoardingCard from '../components/cards/OnBoardingCard';

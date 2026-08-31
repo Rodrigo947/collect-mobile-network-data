@@ -1,9 +1,11 @@
-import { CellMetricsData } from './network';
 import { LocationData } from './location';
+import { CellMetricsData } from './network';
+import { MotionData } from './sensor';
 
 export interface SampleData {
     timestamp: number;
     location: LocationData;
+    motion: MotionData;
     servingCell: CellMetricsData | null;
     neighboringCells: CellMetricsData[];
 }
