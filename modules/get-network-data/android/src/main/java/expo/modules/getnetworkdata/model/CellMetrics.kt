@@ -12,5 +12,6 @@ data class CellMetrics(
     val rsrp: Int?,
     val rsrq: Int?,
     val rssi: Int?,
-    val sinr: Int?
+    val sinr: Int?,
+    val timingAdvance: Int?
 )

@@ -11,6 +11,7 @@ export interface CellMetricsData {
     rsrq?: number | null;
     rssi?: number | null;
     sinr?: number | null;
+    timingAdvance?: number | null;
 }
 
 export interface NetworkSnapshotData {

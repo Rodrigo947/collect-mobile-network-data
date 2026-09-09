@@ -108,7 +108,8 @@ class TelephonyRepository(private val context: Context) {
                     rssi = ss.rssi.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 },
                     sinr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         ss.rssnr.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 }
-                    } else null
+                    } else null,
+                    timingAdvance = ss.timingAdvance.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 }
                 )
             }
 
@@ -130,7 +131,8 @@ class TelephonyRepository(private val context: Context) {
                         rsrp = ss?.ssRsrp?.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 },
                         rsrq = ss?.ssRsrq?.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 },
                         rssi = null,
-                        sinr = ss?.ssSinr?.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 }
+                        sinr = ss?.ssSinr?.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 },
+                        timingAdvance = null
                     )
                 }
             }
@@ -150,7 +152,8 @@ class TelephonyRepository(private val context: Context) {
                     rsrp = null,
                     rsrq = null,
                     rssi = ss.dbm.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 },
-                    sinr = null
+                    sinr = null,
+                    timingAdvance = null
                 )
             }
 
@@ -169,7 +172,8 @@ class TelephonyRepository(private val context: Context) {
                     rsrp = null,
                     rsrq = null,
                     rssi = ss.dbm.takeIf { it != Int.MAX_VALUE && it != Int.MIN_VALUE && it != 2147483647 },
-                    sinr = null
+                    sinr = null,
+                    timingAdvance = null
                 )
             }
 
