@@ -3,11 +3,35 @@ package expo.modules.getnetworkdata
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Build
+import android.os.Looper
+import androidx.core.content.ContextCompat
 import com.mobility.network.repository.TelephonyRepository
 import com.mobility.network.model.CellMetrics
 import com.mobility.network.model.NetworkSnapshot
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
-class GetNetworkDataModule : Module() {
+class GetNetworkDataModule : Module(), SensorEventListener {
+
+    private var sensorManager: SensorManager? = null
+    private var accelerometer: FloatArray? = null
+    private var gyroscope: FloatArray? = null
+    private var sensorsRegistered = false
+    private var sensorReadyLatch: CountDownLatch? = null
+    private var locationManager: LocationManager? = null
+    private var locationListener: LocationListener? = null
+    private var latestLocation: Location? = null
 
     override fun definition() = ModuleDefinition {
 
@@ -27,7 +51,7 @@ class GetNetworkDataModule : Module() {
                 )
             }
             try {
-                val snapshot = repository.snapshot()
+                val snapshot = repository.freshSnapshot()
 
                 snapshotToMap(snapshot)
             } catch (e: SecurityException) {
@@ -42,21 +66,112 @@ class GetNetworkDataModule : Module() {
                 )
             }
         }
+
+        AsyncFunction("getLocationData") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+
+            if (!hasLocationPermission(context)) {
+                return@AsyncFunction mapOf(
+                    "error" to "PERMISSION",
+                    "message" to "Location permission denied. ACCESS_FINE_LOCATION is required."
+                )
+            }
+
+            try {
+                startLocationUpdates(context)
+                mapOf("location" to latestLocation?.let { locationToMap(it) })
+            } catch (e: SecurityException) {
+                mapOf(
+                    "error" to "PERMISSION",
+                    "message" to (e.message ?: "Missing permission")
+                )
+            }
+        }
+
+        AsyncFunction("getSensorData") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+
+            try {
+                startSensors(context)
+                sensorReadyLatch?.await(1, TimeUnit.SECONDS)
+
+                val currentAccelerometer = accelerometer
+                    ?: throw IllegalStateException("Accelerometer data unavailable")
+                val currentGyroscope = gyroscope
+                    ?: throw IllegalStateException("Gyroscope data unavailable")
+
+                mapOf(
+                    "accelerometer" to vectorToMap(currentAccelerometer),
+                    "gyroscope" to vectorToMap(currentGyroscope)
+                )
+            } catch (e: Exception) {
+                mapOf(
+                    "error" to "SENSOR_ERROR",
+                    "message" to (e.message ?: "Failed to read sensors")
+                )
+            }
+        }
+
+        AsyncFunction("getCollectionData") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+
+            if (!hasLocationPermission(context)) {
+                return@AsyncFunction mapOf(
+                    "error" to "PERMISSION",
+                    "message" to "Location permission denied. ACCESS_FINE_LOCATION is required."
+                )
+            }
+
+            try {
+                startSensors(context)
+                sensorReadyLatch?.await(1, TimeUnit.SECONDS)
+                startLocationUpdates(context)
+                val snapshot = TelephonyRepository(context).freshSnapshot()
+
+                val currentAccelerometer = accelerometer
+                    ?: throw IllegalStateException("Accelerometer data unavailable")
+                val currentGyroscope = gyroscope
+                    ?: throw IllegalStateException("Gyroscope data unavailable")
+
+                mapOf(
+                    "timestamp" to System.currentTimeMillis(),
+                    "location" to latestLocation?.let { locationToMap(it) },
+                    "motion" to mapOf(
+                        "accelerometer" to vectorToMap(currentAccelerometer),
+                        "gyroscope" to vectorToMap(currentGyroscope)
+                    ),
+                    "servingCell" to snapshot.cells.firstOrNull { it.registered }?.let { cellToMap(it) },
+                    "neighboringCells" to snapshot.cells.filterNot { it.registered }.map { cellToMap(it) }
+                )
+            } catch (e: SecurityException) {
+                mapOf(
+                    "error" to "PERMISSION",
+                    "message" to (e.message ?: "Missing permission")
+                )
+            } catch (e: Exception) {
+                mapOf(
+                    "error" to "COLLECTION_ERROR",
+                    "message" to (e.message ?: "Failed to collect data")
+                )
+            }
+        }
     }
+
     private fun snapshotToMap(
         snapshot: NetworkSnapshot
     ): Map<String, Any?> {
-
         return mapOf(
             "timestamp" to snapshot.timestamp,
             "operator" to snapshot.operator,
             "networkType" to snapshot.networkType,
-            "cells" to snapshot.cells.map {
-                cellToMap(it)
-            }
+            "cells" to snapshot.cells.map { cellToMap(it) }
         )
     }
-        private fun cellToMap(
+
+    private fun cellToMap(
         cell: CellMetrics
     ): Map<String, Any?> {
         return mapOf(
@@ -73,7 +188,90 @@ class GetNetworkDataModule : Module() {
             "rssi" to cell.rssi,
             "sinr" to cell.sinr,
             "timingAdvance" to cell.timingAdvance
+        )
+    }
 
+    private fun hasLocationPermission(context: Context): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun startSensors(context: Context) {
+        if (sensorsRegistered) return
+
+        sensorReadyLatch = CountDownLatch(2)
+        sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val sensorDelay = SensorManager.SENSOR_DELAY_GAME
+        sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
+            sensorManager?.registerListener(this, it, sensorDelay)
+        }
+        sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)?.let {
+            sensorManager?.registerListener(this, it, sensorDelay)
+        }
+        sensorsRegistered = true
+    }
+
+    override fun onSensorChanged(event: SensorEvent) {
+        when (event.sensor.type) {
+            Sensor.TYPE_ACCELEROMETER -> {
+                accelerometer = event.values.copyOf()
+                sensorReadyLatch?.countDown()
+            }
+            Sensor.TYPE_GYROSCOPE -> {
+                gyroscope = event.values.copyOf()
+                sensorReadyLatch?.countDown()
+            }
+        }
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) = Unit
+
+    private fun startLocationUpdates(context: Context) {
+        if (locationListener != null) return
+
+        val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager = manager
+        val provider = when {
+            manager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
+            manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) -> LocationManager.NETWORK_PROVIDER
+            else -> return
+        }
+
+        val listener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                latestLocation = location
+            }
+        }
+        locationListener = listener
+
+        latestLocation = try {
+            manager.getLastKnownLocation(provider)
+        } catch (e: SecurityException) {
+            null
+        }
+
+        manager.requestLocationUpdates(provider, 1000L, 0f, listener, Looper.getMainLooper())
+    }
+
+    private fun locationToMap(location: Location): Map<String, Any?> {
+        return mapOf(
+            "latitude" to location.latitude,
+            "longitude" to location.longitude,
+            "altitude" to location.altitude,
+            "accuracy" to location.accuracy.toDouble(),
+            "altitudeAccuracy" to if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && location.hasVerticalAccuracy()) location.verticalAccuracyMeters.toDouble() else null,
+            "speed" to if (location.hasSpeed()) location.speed.toDouble() else null,
+            "heading" to if (location.hasBearing()) location.bearing.toDouble() else null
+        )
+    }
+
+    private fun vectorToMap(values: FloatArray): Map<String, Double> {
+        return mapOf(
+            "x" to values[0].toDouble(),
+            "y" to values[1].toDouble(),
+            "z" to values[2].toDouble()
         )
     }
 }

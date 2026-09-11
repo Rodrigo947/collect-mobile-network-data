@@ -10,9 +10,8 @@ import NeighboringCellCard from '../components/cards/NeighboringCellCard';
 import ServingCellCard from '../components/cards/ServingCellCard';
 import AppHeader from '../components/layout/AppHeader';
 import ScreenContainer from '../components/layout/ScreenContainer';
-import { useLocation } from '../hooks/useLocation';
-import { useNetworkMetrics } from '../hooks/useNetworkMetrics';
-import { useSensor } from '../hooks/useSensor';
+import { requestLocationPermission } from '../services/locationService';
+import { getCollectionData } from '../services/networkService';
 import StorageService from '../services/storage';
 import useHomeStyleScreen from '../styles/homeStyleScreen';
 import { CellMetricsData } from '../types/network';
@@ -33,33 +32,25 @@ export default function HomeScreen() {
         [],
     );
     const [samplesData, setSamplesData] = useState<SampleData[]>([]);
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    const {
-        location,
-        loading: locLoading,
-        error: locError,
-        refresh: refreshLocation,
-    } = useLocation();
+    const [location, setLocation] = useState<SampleData['location'] | null>(
+        null,
+    );
+    const [isLoading, setIsLoading] = useState(true);
+    const collectionInFlightRef = useRef(false);
 
-    const {
-        loading: netLoading,
-        error: netError,
-        refresh: refreshNetwork,
-    } = useNetworkMetrics();
-
-    const {
-        accelerometer,
-        gyroscope,
-        error,
-        refresh: refreshSensor,
-    } = useSensor();
-
-    const handleStartCollecting = () => {
+    const handleStartCollecting = async () => {
         if (isCollecting) {
             setIsCollecting(false);
             StorageService.insertSamples(samplesData);
         } else {
+            const hasPermission = await requestLocationPermission();
+            if (!hasPermission) {
+                console.warn('Permissão de localização negada.');
+                return;
+            }
+
             setIsCollecting(true);
             setSamplesData([]);
             setServingCell(null);
@@ -84,37 +75,57 @@ export default function HomeScreen() {
 
     useEffect(() => {
         if (isCollecting) {
-            intervalRef.current = setInterval(async () => {
-                const [newLocation, newSnapshot, newMotion] = await Promise.all(
-                    [refreshLocation(), refreshNetwork(), refreshSensor()],
-                );
-
+            const collect = async () => {
                 setSeconds(prev => prev + 1);
 
-                if (!newLocation || !newSnapshot || !newMotion) {
-                    return;
+                if (collectionInFlightRef.current) return;
+
+                collectionInFlightRef.current = true;
+
+                try {
+                    const data = await getCollectionData();
+
+                    if (
+                        !data.location ||
+                        !data.motion.accelerometer ||
+                        !data.motion.gyroscope
+                    ) {
+                        if (!data.location) {
+                            console.warn(
+                                'Localização não disponível, aguardando fixo...',
+                            );
+                        }
+                        return;
+                    }
+
+                    const serving = data.servingCell;
+                    const neighboring = data.neighboringCells;
+
+                    setServingCell(serving);
+                    setNeighboringCells(neighboring);
+                    setLocation(data.location);
+                    setIsLoading(false);
+
+                    const newSample: SampleData = {
+                        timestamp: data.timestamp,
+                        location: data.location,
+                        motion: data.motion,
+                        servingCell: serving,
+                        neighboringCells: neighboring,
+                    };
+                    setSamplesData(prev => [...prev, newSample]);
+                } catch (error) {
+                    console.warn(
+                        'Falha ao coletar dados:',
+                        error instanceof Error ? error.message : error,
+                    );
+                } finally {
+                    collectionInFlightRef.current = false;
                 }
+            };
 
-                const serving =
-                    newSnapshot.cells.find(
-                        (cell: CellMetricsData) => cell.registered,
-                    ) || null;
-                const neighboring = newSnapshot.cells.filter(
-                    (cell: CellMetricsData) => !cell.registered,
-                );
-
-                setServingCell(serving);
-                setNeighboringCells(neighboring);
-
-                const newSample: SampleData = {
-                    timestamp: Date.now(),
-                    location: newLocation,
-                    motion: newMotion,
-                    servingCell: serving,
-                    neighboringCells: neighboring,
-                };
-                setSamplesData(prev => [...prev, newSample]);
-            }, 1000);
+            collect();
+            intervalRef.current = setInterval(collect, 1000);
         } else {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -123,12 +134,13 @@ export default function HomeScreen() {
         }
 
         return () => {
+            collectionInFlightRef.current = false;
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
         };
-    }, [isCollecting, refreshLocation, refreshNetwork]);
+    }, [isCollecting]);
 
     return (
         <>
@@ -195,13 +207,13 @@ export default function HomeScreen() {
                     </View>
                     <LocationCard
                         isCollecting={isCollecting}
-                        isLoading={locLoading}
+                        isLoading={isLoading}
                         latitude={location?.latitude}
                         longitude={location?.longitude}
                     />
                     <ServingCellCard
                         isCollecting={isCollecting}
-                        isLoading={netLoading}
+                        isLoading={isLoading}
                         cellID={servingCell?.pci}
                         technology={servingCell?.technology}
                         RSRP={servingCell?.rsrp}

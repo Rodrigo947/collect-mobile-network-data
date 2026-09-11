@@ -14,6 +14,8 @@ import android.telephony.CellIdentityNr
 import android.telephony.CellSignalStrengthNr
 import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 import com.mobility.network.model.CellMetrics
 import com.mobility.network.model.NetworkSnapshot
@@ -60,12 +62,48 @@ class TelephonyRepository(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun snapshot(): NetworkSnapshot {
+        return snapshotFromCells(telephony.allCellInfo.orEmpty())
+    }
+
+    @SuppressLint("MissingPermission")
+    fun freshSnapshot(): NetworkSnapshot {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return snapshot()
+        }
+
+        val cells = mutableListOf<CellInfo>()
+        val latch = CountDownLatch(1)
+
+        try {
+            telephony.requestCellInfoUpdate(
+                ContextCompat.getMainExecutor(context),
+                object : TelephonyManager.CellInfoCallback() {
+                    override fun onCellInfo(updatedCells: MutableList<CellInfo>) {
+                        cells.clear()
+                        cells.addAll(updatedCells)
+                        latch.countDown()
+                    }
+
+                    override fun onError(errorCode: Int, detail: Throwable?) {
+                        latch.countDown()
+                    }
+                }
+            )
+            latch.await(2, TimeUnit.SECONDS)
+        } catch (e: Exception) {
+            return snapshot()
+        }
+
+        return if (cells.isEmpty()) snapshot() else snapshotFromCells(cells)
+    }
+
+    private fun snapshotFromCells(cellInfo: List<CellInfo>): NetworkSnapshot {
         val mccMnc = networkOperator()
         val mcc: String? = mccMnc?.takeIf { it.length >= 3 }?.substring(0, 3)
         val mnc: String? = mccMnc?.takeIf { it.length > 3 }?.substring(3)
 
         val cells: List<CellMetrics> = try {
-            telephony.allCellInfo.orEmpty().mapNotNull { info: CellInfo ->
+            cellInfo.mapNotNull { info: CellInfo ->
                 mapCellInfo(info, mcc, mnc)
             }
         } catch (e: SecurityException) {

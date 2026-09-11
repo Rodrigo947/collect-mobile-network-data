@@ -2,7 +2,7 @@ import { PermissionsAndroid, Platform } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import { LocationData } from '../types/location';
 
-async function requestPermission(): Promise<boolean> {
+export async function requestLocationPermission(): Promise<boolean> {
     if (Platform.OS !== 'android') return true;
 
     const granted = await PermissionsAndroid.request(
@@ -13,7 +13,7 @@ async function requestPermission(): Promise<boolean> {
 }
 
 export async function getCurrentLocation(): Promise<LocationData> {
-    const ok = await requestPermission();
+    const ok = await requestLocationPermission();
 
     if (!ok) throw new Error('Permissão negada.');
 
