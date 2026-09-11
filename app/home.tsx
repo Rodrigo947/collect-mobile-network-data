@@ -10,9 +10,12 @@ import NeighboringCellCard from '../components/cards/NeighboringCellCard';
 import ServingCellCard from '../components/cards/ServingCellCard';
 import AppHeader from '../components/layout/AppHeader';
 import ScreenContainer from '../components/layout/ScreenContainer';
-import { requestLocationPermission } from '../services/locationService';
-import { getCollectionData } from '../services/networkService';
-import StorageService from '../services/storage';
+import {
+    getCollectionData,
+    getCollectionServiceStatus,
+    startCollectionService,
+    stopCollectionService,
+} from '../services/networkService';
 import useHomeStyleScreen from '../styles/homeStyleScreen';
 import { CellMetricsData } from '../types/network';
 import { SampleData } from '../types/sample';
@@ -42,20 +45,24 @@ export default function HomeScreen() {
 
     const handleStartCollecting = async () => {
         if (isCollecting) {
+            await stopCollectionService();
             setIsCollecting(false);
-            StorageService.insertSamples(samplesData);
         } else {
-            const hasPermission = await requestLocationPermission();
-            if (!hasPermission) {
-                console.warn('Permissão de localização negada.');
-                return;
+            try {
+                const started = await startCollectionService();
+                if (started) {
+                    setIsCollecting(true);
+                    setSamplesData([]);
+                    setServingCell(null);
+                    setNeighboringCells([]);
+                    setSeconds(0);
+                }
+            } catch (error) {
+                console.warn(
+                    'Falha ao iniciar coleta em segundo plano:',
+                    error instanceof Error ? error.message : error,
+                );
             }
-
-            setIsCollecting(true);
-            setSamplesData([]);
-            setServingCell(null);
-            setNeighboringCells([]);
-            setSeconds(0);
         }
     };
 
@@ -72,6 +79,14 @@ export default function HomeScreen() {
             '0',
         )}:${String(secs).padStart(2, '0')}`;
     };
+
+    useEffect(() => {
+        getCollectionServiceStatus()
+            .then(setIsCollecting)
+            .catch(error => {
+                console.warn('Falha ao consultar status da coleta:', error);
+            });
+    }, []);
 
     useEffect(() => {
         if (isCollecting) {
@@ -205,6 +220,11 @@ export default function HomeScreen() {
                             />
                         </TouchableOpacity>
                     </View>
+                    <Text style={styles.noCell}>
+                        {isCollecting
+                            ? 'Coleta em segundo plano ativa'
+                            : 'Coleta em segundo plano parada'}
+                    </Text>
                     <LocationCard
                         isCollecting={isCollecting}
                         isLoading={isLoading}

@@ -5,6 +5,7 @@ import expo.modules.kotlin.modules.ModuleDefinition
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -19,6 +20,8 @@ import androidx.core.content.ContextCompat
 import com.mobility.network.repository.TelephonyRepository
 import com.mobility.network.model.CellMetrics
 import com.mobility.network.model.NetworkSnapshot
+import expo.modules.getnetworkdata.service.CollectionForegroundService
+import expo.modules.getnetworkdata.storage.CollectionDatabase
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -36,6 +39,54 @@ class GetNetworkDataModule : Module(), SensorEventListener {
     override fun definition() = ModuleDefinition {
 
         Name("GetNetworkData")
+
+        AsyncFunction("initializeCollectionDatabase") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            CollectionDatabase.initialize(context)
+            mapOf("initialized" to true)
+        }
+
+        AsyncFunction("startCollectionService") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+
+            if (!hasLocationPermission(context)) {
+                return@AsyncFunction mapOf(
+                    "running" to false,
+                    "error" to "PERMISSION",
+                    "message" to "Location permission denied. ACCESS_FINE_LOCATION is required."
+                )
+            }
+
+            CollectionDatabase.initialize(context)
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, CollectionForegroundService::class.java)
+            )
+            mapOf("running" to true)
+        }
+
+        AsyncFunction("stopCollectionService") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            context.stopService(Intent(context, CollectionForegroundService::class.java))
+            context.getSharedPreferences(
+                CollectionForegroundService.STATUS_PREFS,
+                Context.MODE_PRIVATE
+            ).edit().putBoolean(CollectionForegroundService.STATUS_KEY, false).apply()
+            mapOf("running" to false)
+        }
+
+        AsyncFunction("getCollectionServiceStatus") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            val running = context.getSharedPreferences(
+                CollectionForegroundService.STATUS_PREFS,
+                Context.MODE_PRIVATE
+            ).getBoolean(CollectionForegroundService.STATUS_KEY, false)
+            mapOf("running" to running)
+        }
 
         AsyncFunction("getNetworkMetrics") {
 

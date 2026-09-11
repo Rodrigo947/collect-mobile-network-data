@@ -6,10 +6,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application>
         <service
-            android:name=".GeoNetworkData"
+            android:name=".service.CollectionForegroundService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location" />

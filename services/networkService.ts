@@ -1,4 +1,5 @@
 ﻿import { requireNativeModule } from 'expo-modules-core';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { NetworkSnapshotData } from '../types/network';
 import { SampleData } from '../types/sample';
 
@@ -50,4 +51,40 @@ export async function getCollectionData(): Promise<SampleData> {
         servingCell: network.cells.find(cell => cell.registered) ?? null,
         neighboringCells: network.cells.filter(cell => !cell.registered),
     } as SampleData;
+}
+
+export async function initializeCollectionDatabase(): Promise<void> {
+    await GetNetworkData.initializeCollectionDatabase();
+}
+
+export async function startCollectionService(): Promise<boolean> {
+    if (
+        Platform.OS === 'android' &&
+        Number(Platform.Version) >= 33 &&
+        !(await PermissionsAndroid.check(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        ))
+    ) {
+        await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        );
+    }
+
+    const result = await GetNetworkData.startCollectionService();
+    if (result?.error) {
+        throw new Error(
+            result.message ?? 'Falha ao iniciar a coleta em segundo plano.',
+        );
+    }
+    return result.running === true;
+}
+
+export async function stopCollectionService(): Promise<boolean> {
+    const result = await GetNetworkData.stopCollectionService();
+    return result.running === true;
+}
+
+export async function getCollectionServiceStatus(): Promise<boolean> {
+    const result = await GetNetworkData.getCollectionServiceStatus();
+    return result.running === true;
 }

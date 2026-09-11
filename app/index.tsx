@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, Image, Text } from 'react-native';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import packageJson from '../package.json';
+import { initializeCollectionDatabase } from '../services/networkService';
 import storage from '../services/storage';
 import useIndexStyle from '../styles/indexStyleScreen';
 import { Colors } from '../theme';
@@ -19,6 +20,8 @@ export default function SplashScreen() {
 
     const initialize = async () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
+
+        await initializeCollectionDatabase();
 
         const accepted = await storage.hasAcceptedTerms();
 
