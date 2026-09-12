@@ -27,6 +27,13 @@ export default function useIndexStyleScreen() {
         loader: {
             marginTop: 40,
         },
+        userId: {
+            position: 'absolute',
+            bottom: 40,
+            alignSelf: 'center',
+            textAlign: 'center',
+            color: Colors.textSecondary,
+        },
     });
     return styles;
 }

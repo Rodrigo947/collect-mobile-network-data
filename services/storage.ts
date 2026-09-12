@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SampleData } from '../types/sample';
 
 const TERMS_KEY = '@geonetcollect:acceptedTerms';
+const PARTICIPANT_ID_KEY = '@geonetcollect:participantId';
+const PARTICIPANT_TOKEN_KEY = '@geonetcollect:participantToken';
 
 class StorageService {
     async hasAcceptedTerms(): Promise<boolean> {
@@ -22,6 +24,24 @@ class StorageService {
         } catch (error) {
             console.error('Erro ao salvar AsyncStorage:', error);
         }
+    }
+
+    async saveParticipantCredentials(
+        participantId: string,
+        token: string,
+    ): Promise<void> {
+        await Promise.all([
+            AsyncStorage.setItem(PARTICIPANT_ID_KEY, participantId),
+            AsyncStorage.setItem(PARTICIPANT_TOKEN_KEY, token),
+        ]);
+    }
+
+    async getParticipantId(): Promise<string | null> {
+        return AsyncStorage.getItem(PARTICIPANT_ID_KEY);
+    }
+
+    async getParticipantToken(): Promise<string | null> {
+        return AsyncStorage.getItem(PARTICIPANT_TOKEN_KEY);
     }
 
     async insertSamples(samples: SampleData[]): Promise<void> {

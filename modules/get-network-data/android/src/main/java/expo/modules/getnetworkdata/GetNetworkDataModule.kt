@@ -40,6 +40,17 @@ class GetNetworkDataModule : Module(), SensorEventListener {
 
         Name("GetNetworkData")
 
+        AsyncFunction("setParticipantCredentials") { participantId: String, token: String ->
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            context.getSharedPreferences(PARTICIPANT_PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putString(PARTICIPANT_ID_KEY, participantId)
+                .putString(PARTICIPANT_TOKEN_KEY, token)
+                .apply()
+            mapOf("saved" to true)
+        }
+
         AsyncFunction("initializeCollectionDatabase") {
             val context = appContext.reactContext
                 ?: throw Exception("React context unavailable")
@@ -324,5 +335,11 @@ class GetNetworkDataModule : Module(), SensorEventListener {
             "y" to values[1].toDouble(),
             "z" to values[2].toDouble()
         )
+    }
+
+    companion object {
+        const val PARTICIPANT_PREFS = "participant_credentials"
+        const val PARTICIPANT_ID_KEY = "participant_id"
+        const val PARTICIPANT_TOKEN_KEY = "participant_token"
     }
 }
