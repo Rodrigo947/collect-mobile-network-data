@@ -1,4 +1,7 @@
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { requireNativeModule } from 'expo-modules-core';
+import { Platform } from 'react-native';
 
 import StorageService from './storage';
 
@@ -20,7 +23,11 @@ export async function registerParticipant(): Promise<RegistrationResponse> {
         response = await fetch(`${API_BASE_URL}/participant`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({}),
+            body: JSON.stringify({
+                appVersion: Constants.expoConfig?.version ?? 'unknown',
+                deviceModel: Device.modelName ?? 'unknown',
+                os: `${Platform.OS === 'android' ? 'Android' : Platform.OS} ${String(Platform.Version)}`,
+            }),
         });
     } catch {
         throw new Error('Não foi possível conectar à API.');
