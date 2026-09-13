@@ -87,7 +87,7 @@ export default function OnboardingScreen() {
             try {
                 await registerParticipant();
                 await StorageService.acceptTerms();
-                router.replace('/home');
+                router.replace('/permissions');
             } catch (error) {
                 Toast.show({
                     type: 'error',

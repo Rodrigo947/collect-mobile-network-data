@@ -4,6 +4,7 @@ import { ActivityIndicator, Image, Text, View } from 'react-native';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import packageJson from '../package.json';
 import { initializeCollectionDatabase } from '../services/networkService';
+import { hasRequiredPermissions } from '../services/permissionsService';
 import storage from '../services/storage';
 import useIndexStyle from '../styles/indexStyleScreen';
 import { Colors } from '../theme';
@@ -30,10 +31,15 @@ export default function SplashScreen() {
 
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        if (accepted && storedParticipantId) {
+        if (!accepted || !storedParticipantId) {
+            router.replace('/onboarding');
+            return;
+        }
+
+        if (await hasRequiredPermissions()) {
             router.replace('/home');
         } else {
-            router.replace('/onboarding');
+            router.replace('/permissions');
         }
     };
 

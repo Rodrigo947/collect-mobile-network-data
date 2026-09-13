@@ -88,3 +88,12 @@ export async function getCollectionServiceStatus(): Promise<boolean> {
     const result = await GetNetworkData.getCollectionServiceStatus();
     return result.running === true;
 }
+
+export async function getStoredSampleCount(): Promise<number> {
+    const result = await GetNetworkData.getStoredSampleCount();
+    return Number(result.count ?? 0);
+}
+
+export async function sendStoredSamples(): Promise<boolean> {
+    return (await GetNetworkData.sendStoredSamples()) === true;
+}

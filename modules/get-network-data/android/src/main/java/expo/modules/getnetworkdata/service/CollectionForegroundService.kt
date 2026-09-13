@@ -19,14 +19,15 @@ import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.mobility.network.model.NetworkSnapshot
 import com.mobility.network.repository.TelephonyRepository
 import expo.modules.getnetworkdata.storage.CollectionDatabase
+import expo.modules.getnetworkdata.service.CollectionBatchSender
 
 class CollectionForegroundService : Service(), SensorEventListener {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var database: CollectionDatabase
     private lateinit var telephonyRepository: TelephonyRepository
+    private lateinit var batchSender: CollectionBatchSender
     private var sensorManager: SensorManager? = null
     private var locationManager: LocationManager? = null
     private var locationListener: LocationListener? = null
@@ -45,10 +46,12 @@ class CollectionForegroundService : Service(), SensorEventListener {
         super.onCreate()
         database = CollectionDatabase(this)
         telephonyRepository = TelephonyRepository(this)
+        batchSender = CollectionBatchSender(this)
         startSensors()
         startLocationUpdates()
         startForeground(NOTIFICATION_ID, createNotification())
         setRunning(true)
+        if (database.sampleCount() >= BATCH_SIZE) batchSender.sendAsync()
         handler.post(collectRunnable)
     }
 
@@ -58,6 +61,7 @@ class CollectionForegroundService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        batchSender.sendAsync()
         sensorManager?.unregisterListener(this)
         locationListener?.let { locationManager?.removeUpdates(it) }
         setRunning(false)
@@ -92,6 +96,8 @@ class CollectionForegroundService : Service(), SensorEventListener {
             gyroscope = gyroscope?.let { vectorToMap(it) },
             snapshot = snapshot
         )
+        val count = database.sampleCount()
+        if (count >= BATCH_SIZE && count % BATCH_SIZE == 0) batchSender.sendAsync()
     }
 
     private fun startSensors() {
@@ -153,7 +159,7 @@ class CollectionForegroundService : Service(), SensorEventListener {
             )
         }
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
-            .setContentTitle("Coleta de dados em andamento")
+            .setContentTitle("collect-mobile-network-data")
             .setContentText("Coleta de dados em andamento")
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
             .setOngoing(true)
@@ -170,8 +176,12 @@ class CollectionForegroundService : Service(), SensorEventListener {
     companion object {
         const val STATUS_PREFS = "collection_service_status"
         const val STATUS_KEY = "running"
+        const val PARTICIPANT_PREFS = "participant_credentials"
+        const val PARTICIPANT_TOKEN_KEY = "participant_token"
+        const val API_BASE_URL_KEY = "api_base_url"
         private const val NOTIFICATION_CHANNEL = "collection_service"
         private const val NOTIFICATION_ID = 7401
         private const val COLLECTION_INTERVAL_MS = 1000L
+        private const val BATCH_SIZE = 1800
     }
 }

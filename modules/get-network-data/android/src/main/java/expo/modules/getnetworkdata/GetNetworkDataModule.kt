@@ -21,6 +21,7 @@ import com.mobility.network.repository.TelephonyRepository
 import com.mobility.network.model.CellMetrics
 import com.mobility.network.model.NetworkSnapshot
 import expo.modules.getnetworkdata.service.CollectionForegroundService
+import expo.modules.getnetworkdata.service.CollectionBatchSender
 import expo.modules.getnetworkdata.storage.CollectionDatabase
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -40,13 +41,14 @@ class GetNetworkDataModule : Module(), SensorEventListener {
 
         Name("GetNetworkData")
 
-        AsyncFunction("setParticipantCredentials") { participantId: String, token: String ->
+        AsyncFunction("setParticipantCredentials") { participantId: String, token: String, apiBaseUrl: String ->
             val context = appContext.reactContext
                 ?: throw Exception("React context unavailable")
             context.getSharedPreferences(PARTICIPANT_PREFS, Context.MODE_PRIVATE)
                 .edit()
                 .putString(PARTICIPANT_ID_KEY, participantId)
                 .putString(PARTICIPANT_TOKEN_KEY, token)
+                .putString(API_BASE_URL_KEY, apiBaseUrl)
                 .apply()
             mapOf("saved" to true)
         }
@@ -97,6 +99,18 @@ class GetNetworkDataModule : Module(), SensorEventListener {
                 Context.MODE_PRIVATE
             ).getBoolean(CollectionForegroundService.STATUS_KEY, false)
             mapOf("running" to running)
+        }
+
+        AsyncFunction("getStoredSampleCount") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            mapOf("count" to CollectionDatabase(context).use { it.sampleCount() })
+        }
+
+        AsyncFunction("sendStoredSamples") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            CollectionBatchSender(context).send()
         }
 
         AsyncFunction("getNetworkMetrics") {
@@ -341,5 +355,6 @@ class GetNetworkDataModule : Module(), SensorEventListener {
         const val PARTICIPANT_PREFS = "participant_credentials"
         const val PARTICIPANT_ID_KEY = "participant_id"
         const val PARTICIPANT_TOKEN_KEY = "participant_token"
+        const val API_BASE_URL_KEY = "api_base_url"
     }
 }

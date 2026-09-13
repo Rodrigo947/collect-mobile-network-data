@@ -55,6 +55,7 @@ export async function registerParticipant(): Promise<RegistrationResponse> {
     await GetNetworkData.setParticipantCredentials(
         payload.participantId,
         payload.token,
+        API_BASE_URL,
     );
 
     return {

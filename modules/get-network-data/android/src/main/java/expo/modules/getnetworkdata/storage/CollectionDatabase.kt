@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import org.json.JSONArray
+import org.json.JSONObject
 import com.mobility.network.model.CellMetrics
 import com.mobility.network.model.NetworkSnapshot
 
@@ -13,6 +15,7 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
     null,
     DATABASE_VERSION
 ) {
+    data class PendingBatch(val body: String, val sampleIds: List<Long>)
     override fun onCreate(database: SQLiteDatabase) {
         database.execSQL(
             """
@@ -130,6 +133,124 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
             database.endTransaction()
         }
     }
+
+    fun sampleCount(): Int {
+        readableDatabase.rawQuery("SELECT COUNT(*) FROM samples", null).use { cursor ->
+            return if (cursor.moveToFirst()) cursor.getInt(0) else 0
+        }
+    }
+
+    fun pendingBatch(): PendingBatch? {
+        val database = readableDatabase
+        val samples = JSONArray()
+        val sampleIds = mutableListOf<Long>()
+        database.query("samples", null, "sent = 0", null, null, null, "id ASC").use { cursor ->
+            while (cursor.moveToNext()) {
+                val sampleId = cursor.getLong(cursor.getColumnIndexOrThrow("id"))
+                sampleIds.add(sampleId)
+                samples.put(sampleToJson(database, cursor, sampleId))
+            }
+        }
+        if (sampleIds.isEmpty()) return null
+        return PendingBatch(
+            JSONObject().put("clientBatchId", java.util.UUID.randomUUID().toString())
+                .put("measurements", samples).toString(),
+            sampleIds
+        )
+    }
+
+    fun deleteSamples(sampleIds: List<Long>) {
+        if (sampleIds.isEmpty()) return
+        val database = writableDatabase
+        database.beginTransaction()
+        try {
+            sampleIds.forEach { sampleId ->
+                database.delete("neighboring_cells", "sample_id = ?", arrayOf(sampleId.toString()))
+                database.delete("samples", "id = ?", arrayOf(sampleId.toString()))
+            }
+            database.setTransactionSuccessful()
+        } finally {
+            database.endTransaction()
+        }
+    }
+
+    private fun sampleToJson(database: SQLiteDatabase, cursor: android.database.Cursor, sampleId: Long): JSONObject {
+        fun value(column: String): Any? {
+            val index = cursor.getColumnIndexOrThrow(column)
+            return if (cursor.isNull(index)) null else cursor.getDouble(index)
+        }
+        fun text(column: String): String? {
+            val index = cursor.getColumnIndexOrThrow(column)
+            return if (cursor.isNull(index)) null else cursor.getString(index)
+        }
+        fun cell(prefix: String): JSONObject? {
+            val technology = text("${prefix}_technology") ?: return null
+            return JSONObject().apply {
+                put("registered", value("${prefix}_registered") == 1.0)
+                put("technology", technology)
+                putNumber("cellId", value("${prefix}_cell_id"))
+                putNumber("pci", value("${prefix}_pci"))
+                putNumber("tac", value("${prefix}_tac"))
+                putNumber("arfcn", value("${prefix}_arfcn"))
+                putNullable("mcc", text("${prefix}_mcc"))
+                putNullable("mnc", text("${prefix}_mnc"))
+                putNumber("rsrp", value("${prefix}_rsrp"))
+                putNumber("rsrq", value("${prefix}_rsrq"))
+                putNumber("rssi", value("${prefix}_rssi"))
+                putNumber("sinr", value("${prefix}_sinr"))
+                putNumber("timingAdvance", value("${prefix}_timing_advance"))
+            }
+        }
+        val result = JSONObject().put("timestamp", cursor.getLong(cursor.getColumnIndexOrThrow("timestamp")))
+        result.put("location", JSONObject().apply {
+            putNumber("latitude", value("latitude")); putNumber("longitude", value("longitude"))
+            putNumber("altitude", value("altitude")); putNumber("accuracy", value("accuracy"))
+            putNumber("altitudeAccuracy", value("altitude_accuracy")); putNumber("speed", value("speed"))
+            putNumber("heading", value("heading"))
+        })
+        result.put("motion", JSONObject().apply {
+            put("accelerometer", vector(value("accelerometer_x"), value("accelerometer_y"), value("accelerometer_z")))
+            put("gyroscope", vector(value("gyroscope_x"), value("gyroscope_y"), value("gyroscope_z")))
+        })
+        result.put("servingCell", cell("serving") ?: JSONObject.NULL)
+        val neighbors = JSONArray()
+        database.query("neighboring_cells", null, "sample_id = ?", arrayOf(sampleId.toString()), null, null, "id ASC").use { neighborCursor ->
+            while (neighborCursor.moveToNext()) {
+                neighbors.put(neighborToJson(neighborCursor))
+            }
+        }
+        result.put("neighboringCells", neighbors)
+        return result
+    }
+
+    private fun neighborToJson(cursor: android.database.Cursor): JSONObject {
+        fun number(column: String): Any? {
+            val index = cursor.getColumnIndexOrThrow(column)
+            return if (cursor.isNull(index)) null else cursor.getDouble(index)
+        }
+        fun text(column: String): String? {
+            val index = cursor.getColumnIndexOrThrow(column)
+            return if (cursor.isNull(index)) null else cursor.getString(index)
+        }
+        return JSONObject().apply {
+            put("registered", number("registered") == 1.0)
+            put("technology", text("technology"))
+            putNumber("cellId", number("cell_id")); putNumber("pci", number("pci"))
+            putNumber("tac", number("tac")); putNumber("arfcn", number("arfcn"))
+            putNullable("mcc", text("mcc")); putNullable("mnc", text("mnc"))
+            putNumber("rsrp", number("rsrp")); putNumber("rsrq", number("rsrq"))
+            putNumber("rssi", number("rssi")); putNumber("sinr", number("sinr"))
+            putNumber("timingAdvance", number("timing_advance"))
+        }
+    }
+
+    private fun vector(x: Any?, y: Any?, z: Any?) = JSONObject().apply {
+        putNumber("x", x); putNumber("y", y); putNumber("z", z)
+    }
+
+    private fun JSONObject.putNullable(key: String, value: Any?) = put(key, value ?: JSONObject.NULL)
+
+    private fun JSONObject.putNumber(key: String, value: Any?) = put(key, value ?: JSONObject.NULL)
 
     private fun ContentValues.putCell(prefix: String, cell: CellMetrics?) {
         if (cell == null) return

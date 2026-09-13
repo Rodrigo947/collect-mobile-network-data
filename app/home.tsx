@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import { Entypo, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AppButton from '../components/buttons/AppButton';
 import LocationCard from '../components/cards/LocationCard';
@@ -27,14 +27,13 @@ export default function HomeScreen() {
     const router = useRouter();
 
     const [isCollecting, setIsCollecting] = useState(false);
-    const [seconds, setSeconds] = useState<number>(0);
     const [servingCell, setServingCell] = useState<CellMetricsData | null>(
         null,
     );
     const [neighboringCells, setNeighboringCells] = useState<CellMetricsData[]>(
         [],
     );
-    const [samplesData, setSamplesData] = useState<SampleData[]>([]);
+
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [location, setLocation] = useState<SampleData['location'] | null>(
@@ -52,10 +51,8 @@ export default function HomeScreen() {
                 const started = await startCollectionService();
                 if (started) {
                     setIsCollecting(true);
-                    setSamplesData([]);
                     setServingCell(null);
                     setNeighboringCells([]);
-                    setSeconds(0);
                 }
             } catch (error) {
                 console.warn(
@@ -70,16 +67,6 @@ export default function HomeScreen() {
         router.navigate('/history');
     };
 
-    const formatTime = (totalSeconds: number): string => {
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const secs = totalSeconds % 60;
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
-            2,
-            '0',
-        )}:${String(secs).padStart(2, '0')}`;
-    };
-
     useEffect(() => {
         getCollectionServiceStatus()
             .then(setIsCollecting)
@@ -91,8 +78,6 @@ export default function HomeScreen() {
     useEffect(() => {
         if (isCollecting) {
             const collect = async () => {
-                setSeconds(prev => prev + 1);
-
                 if (collectionInFlightRef.current) return;
 
                 collectionInFlightRef.current = true;
@@ -120,15 +105,6 @@ export default function HomeScreen() {
                     setNeighboringCells(neighboring);
                     setLocation(data.location);
                     setIsLoading(false);
-
-                    const newSample: SampleData = {
-                        timestamp: data.timestamp,
-                        location: data.location,
-                        motion: data.motion,
-                        servingCell: serving,
-                        neighboringCells: neighboring,
-                    };
-                    setSamplesData(prev => [...prev, newSample]);
                 } catch (error) {
                     console.warn(
                         'Falha ao coletar dados:',
@@ -163,46 +139,11 @@ export default function HomeScreen() {
                 <AppHeader title="Coleta de Dados" showBackButton={false} />
                 <ScrollView style={styles.content}>
                     <View style={styles.overviewContainer}>
-                        <View style={styles.overview}>
-                            <Entypo
-                                name="stopwatch"
-                                size={30}
-                                color={Colors.text}
-                            />
-                            <View style={styles.overviewTextContainer}>
-                                <Text
-                                    style={[
-                                        styles.overviewLabel,
-                                        { fontWeight: 'bold' },
-                                    ]}
-                                >
-                                    Tempo
-                                </Text>
-                                <Text style={styles.overviewText}>
-                                    {isCollecting ? formatTime(seconds) : '-'}
-                                </Text>
-                            </View>
-                        </View>
-                        <View style={styles.overview}>
-                            <Entypo
-                                name="archive"
-                                size={30}
-                                color={Colors.text}
-                            />
-                            <View style={styles.overviewTextContainer}>
-                                <Text
-                                    style={[
-                                        styles.overviewLabel,
-                                        { fontWeight: 'bold' },
-                                    ]}
-                                >
-                                    Amostras
-                                </Text>
-                                <Text style={styles.overviewText}>
-                                    {isCollecting ? samplesData.length : '-'}
-                                </Text>
-                            </View>
-                        </View>
+                        <Text style={styles.noCell}>
+                            {isCollecting
+                                ? 'Coleta em segundo plano ativa'
+                                : 'Coleta em segundo plano parada'}
+                        </Text>
                         <TouchableOpacity
                             onPress={handleHistory}
                             style={styles.historyButton}
@@ -220,11 +161,6 @@ export default function HomeScreen() {
                             />
                         </TouchableOpacity>
                     </View>
-                    <Text style={styles.noCell}>
-                        {isCollecting
-                            ? 'Coleta em segundo plano ativa'
-                            : 'Coleta em segundo plano parada'}
-                    </Text>
                     <LocationCard
                         isCollecting={isCollecting}
                         isLoading={isLoading}
