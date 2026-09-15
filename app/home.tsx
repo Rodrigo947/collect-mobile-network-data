@@ -67,6 +67,10 @@ export default function HomeScreen() {
         router.navigate('/history');
     };
 
+    const handleSettings = () => {
+        router.navigate('/settings');
+    };
+
     useEffect(() => {
         getCollectionServiceStatus()
             .then(setIsCollecting)
@@ -134,95 +138,97 @@ export default function HomeScreen() {
     }, [isCollecting]);
 
     return (
-        <>
-            <ScreenContainer style={styles.container}>
-                <AppHeader title="Coleta de Dados" showBackButton={false} />
-                <ScrollView style={styles.content}>
-                    <View style={styles.overviewContainer}>
-                        <Text style={styles.noCell}>
-                            {isCollecting
-                                ? 'Coleta em segundo plano ativa'
-                                : 'Coleta em segundo plano parada'}
-                        </Text>
-                        <TouchableOpacity
-                            onPress={handleHistory}
-                            style={styles.historyButton}
-                            hitSlop={{
-                                top: 10,
-                                bottom: 10,
-                                left: 10,
-                                right: 10,
-                            }}
-                        >
-                            <FontAwesome5
-                                name="history"
-                                size={30}
-                                color={Colors.text}
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    <LocationCard
-                        isCollecting={isCollecting}
-                        isLoading={isLoading}
-                        latitude={location?.latitude}
-                        longitude={location?.longitude}
-                    />
-                    <ServingCellCard
-                        isCollecting={isCollecting}
-                        isLoading={isLoading}
-                        cellID={servingCell?.pci}
-                        technology={servingCell?.technology}
-                        RSRP={servingCell?.rsrp}
-                        RSRQ={servingCell?.rsrq}
-                        RSSI={servingCell?.rssi}
-                        SINR={servingCell?.sinr}
-                    />
-                    <View style={styles.neighboringCellsContainer}>
-                        <Text style={styles.neighboringCellsTitle}>
-                            Células Vizinhas
-                        </Text>
-                        {isCollecting ? (
-                            neighboringCells && neighboringCells.length > 0 ? (
-                                neighboringCells.map((cell, index) => (
-                                    <View key={index}>
-                                        <NeighboringCellCard
-                                            cellID={cell.pci}
-                                            RSRP={cell.rsrp}
-                                            RSRQ={cell.rsrq}
-                                        />
-                                        {index <
-                                            neighboringCells.length - 1 && (
-                                            <View style={styles.divisor} />
-                                        )}
-                                    </View>
-                                ))
-                            ) : (
-                                <Text style={styles.noCell}>
-                                    Nenhuma célula vizinha encontrada.
-                                </Text>
-                            )
+        <ScreenContainer style={styles.container}>
+            <AppHeader
+                title="Coleta de Dados"
+                showRightButton={true}
+                iconRightName="gear"
+                onRightPress={handleSettings}
+            />
+            <ScrollView style={styles.content}>
+                <View style={styles.overviewContainer}>
+                    <Text style={styles.noCell}>
+                        {isCollecting
+                            ? 'Coleta em segundo plano ativa'
+                            : 'Coleta em segundo plano parada'}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={handleHistory}
+                        style={styles.historyButton}
+                        hitSlop={{
+                            top: 10,
+                            bottom: 10,
+                            left: 10,
+                            right: 10,
+                        }}
+                    >
+                        <FontAwesome5
+                            name="history"
+                            size={30}
+                            color={Colors.text}
+                        />
+                    </TouchableOpacity>
+                </View>
+                <LocationCard
+                    isCollecting={isCollecting}
+                    isLoading={isLoading}
+                    latitude={location?.latitude}
+                    longitude={location?.longitude}
+                />
+                <ServingCellCard
+                    isCollecting={isCollecting}
+                    isLoading={isLoading}
+                    cellID={servingCell?.pci}
+                    technology={servingCell?.technology}
+                    RSRP={servingCell?.rsrp}
+                    RSRQ={servingCell?.rsrq}
+                    RSSI={servingCell?.rssi}
+                    SINR={servingCell?.sinr}
+                />
+                <View style={styles.neighboringCellsContainer}>
+                    <Text style={styles.neighboringCellsTitle}>
+                        Células Vizinhas
+                    </Text>
+                    {isCollecting ? (
+                        neighboringCells && neighboringCells.length > 0 ? (
+                            neighboringCells.map((cell, index) => (
+                                <View key={index}>
+                                    <NeighboringCellCard
+                                        cellID={cell.pci}
+                                        RSRP={cell.rsrp}
+                                        RSRQ={cell.rsrq}
+                                    />
+                                    {index < neighboringCells.length - 1 && (
+                                        <View style={styles.divisor} />
+                                    )}
+                                </View>
+                            ))
                         ) : (
                             <Text style={styles.noCell}>
-                                Coleta de dados não iniciada.
+                                Nenhuma célula vizinha encontrada.
                             </Text>
-                        )}
-                    </View>
-                </ScrollView>
-
-                <View style={styles.startButtonContainer}>
-                    <AppButton
-                        title={isCollecting ? 'Parar Coleta' : 'Iniciar Coleta'}
-                        styleButton={{
-                            ...styles.startButton,
-                            backgroundColor: isCollecting
-                                ? Colors.backgroundButtonStop
-                                : Colors.backgroundButtonStart,
-                        }}
-                        rightIcon={isCollecting ? 'stop' : 'play'}
-                        onPress={handleStartCollecting}
-                    />
+                        )
+                    ) : (
+                        <Text style={styles.noCell}>
+                            Coleta de dados não iniciada.
+                        </Text>
+                    )}
                 </View>
-            </ScreenContainer>
-        </>
+            </ScrollView>
+
+            <View style={styles.startButtonContainer}>
+                <AppButton
+                    title={isCollecting ? 'Parar Coleta' : 'Iniciar Coleta'}
+                    styleButton={{
+                        ...styles.startButton,
+                        backgroundColor: isCollecting
+                            ? Colors.backgroundButtonStop
+                            : Colors.backgroundButtonStart,
+                    }}
+                    rightIcon={isCollecting ? 'stop' : 'play'}
+                    onPress={handleStartCollecting}
+                />
+            </View>
+        </ScreenContainer>
     );
 }

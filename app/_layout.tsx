@@ -23,6 +23,8 @@ function RootLayoutNav() {
             <Stack.Screen name="home" options={{ headerShown: false }} />
             <Stack.Screen name="history" options={{ headerShown: false }} />
             <Stack.Screen name="permissions" options={{ headerShown: false }} />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
+            <Stack.Screen name="profile" options={{ headerShown: false }} />
         </Stack>
     );
 }

@@ -1,4 +1,4 @@
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, FontAwesome6 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
 import useAppHeaderStyle from '../../styles/components/appHeaderStyle';
@@ -8,12 +8,18 @@ interface HeaderProps {
     title: string;
     showBackButton?: boolean;
     onBackPress?: () => void;
+    showRightButton?: boolean;
+    iconRightName?: React.ComponentProps<typeof FontAwesome5>['name'];
+    onRightPress?: () => void;
 }
 
 export default function Header({
     title,
     showBackButton = false,
     onBackPress,
+    showRightButton = false,
+    iconRightName,
+    onRightPress,
 }: HeaderProps) {
     const styles = useAppHeaderStyle();
     const router = useRouter();
@@ -45,6 +51,20 @@ export default function Header({
             <Text style={styles.title} numberOfLines={1}>
                 {title}
             </Text>
+
+            {showRightButton && (
+                <TouchableOpacity
+                    onPress={onRightPress}
+                    style={styles.rightButton}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                    <FontAwesome6
+                        name={iconRightName}
+                        size={22}
+                        color={Colors.text}
+                    />
+                </TouchableOpacity>
+            )}
         </View>
     );
 }

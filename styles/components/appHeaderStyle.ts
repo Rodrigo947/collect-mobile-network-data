@@ -24,6 +24,9 @@ export default function useAppHeaderStyle() {
             textAlign: 'center',
             marginHorizontal: 8,
         },
+        rightButton: {
+            padding: 4,
+        },
     });
     return styles;
 }

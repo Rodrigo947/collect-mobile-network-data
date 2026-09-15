@@ -20,6 +20,9 @@ export default function useAppButtonStyle() {
             fontSize: Typography.bodyLarge,
             marginRight: 12,
         },
+        disabledButton: {
+            backgroundColor: Colors.disabled,
+        },
     });
 
     return styles;

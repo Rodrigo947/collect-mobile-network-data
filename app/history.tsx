@@ -61,36 +61,31 @@ export default function HistoryScreen() {
     };
 
     return (
-        <>
-            <ScreenContainer>
-                <AppHeader title="Histórico" showBackButton={true} />
-                <Text>Coletas armazenadas: {storedSampleCount}</Text>
-                <Button
-                    title="Enviar coletas"
-                    onPress={handleSendStoredSamples}
-                />
-                {loading ? (
-                    <View style={styles.noSamplesContainer}>
-                        <ActivityIndicator
-                            size="large"
-                            color={Colors.primary}
-                            style={styles.loader}
-                        />
-                    </View>
-                ) : samples.length === 0 ? (
-                    <View style={styles.noSamplesContainer}>
-                        <Text style={styles.noSamplesText}>
-                            Nenhuma coleta encontrada.
-                        </Text>
-                    </View>
-                ) : (
-                    <ScrollView style={styles.container}>
-                        {samples.map((sampleGroup, index) => (
-                            <HistoryCard key={index} samples={sampleGroup} />
-                        ))}
-                    </ScrollView>
-                )}
-            </ScreenContainer>
-        </>
+        <ScreenContainer>
+            <AppHeader title="Histórico" showBackButton={true} />
+            <Text>Coletas armazenadas: {storedSampleCount}</Text>
+            <Button title="Enviar coletas" onPress={handleSendStoredSamples} />
+            {loading ? (
+                <View style={styles.noSamplesContainer}>
+                    <ActivityIndicator
+                        size="large"
+                        color={Colors.primary}
+                        style={styles.loader}
+                    />
+                </View>
+            ) : samples.length === 0 ? (
+                <View style={styles.noSamplesContainer}>
+                    <Text style={styles.noSamplesText}>
+                        Nenhuma coleta encontrada.
+                    </Text>
+                </View>
+            ) : (
+                <ScrollView style={styles.container}>
+                    {samples.map((sampleGroup, index) => (
+                        <HistoryCard key={index} samples={sampleGroup} />
+                    ))}
+                </ScrollView>
+            )}
+        </ScreenContainer>
     );
 }

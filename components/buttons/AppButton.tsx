@@ -9,6 +9,7 @@ interface Props {
     styleText?: object;
     rightIcon?: string;
     onPress: () => void;
+    disabled?: boolean;
 }
 
 export default function AppButton({
@@ -17,13 +18,18 @@ export default function AppButton({
     styleText,
     rightIcon,
     onPress,
+    disabled = false,
 }: Props) {
     const styles = useAppButtonStyle();
     return (
         <TouchableOpacity
-            style={[styles.button, styleButton]}
+            style={[
+                styles.button,
+                styleButton,
+                disabled && styles.disabledButton,
+            ]}
             activeOpacity={0.8}
-            onPress={onPress}
+            onPress={() => !disabled && onPress()}
         >
             <Text style={[styles.text, styleText]}>{title}</Text>
             {rightIcon && (
