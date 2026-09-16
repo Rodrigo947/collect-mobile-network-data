@@ -53,6 +53,24 @@ class GetNetworkDataModule : Module(), SensorEventListener {
             mapOf("saved" to true)
         }
 
+        AsyncFunction("clearLocalData") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+
+            CollectionDatabase(context).use { database ->
+                database.clearContents()
+            }
+            clearParticipantCredentials(context)
+            mapOf("cleared" to true)
+        }
+
+        AsyncFunction("removeParticipantCredentials") {
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            clearParticipantCredentials(context)
+            mapOf("removed" to true)
+        }
+
         AsyncFunction("initializeCollectionDatabase") {
             val context = appContext.reactContext
                 ?: throw Exception("React context unavailable")
@@ -349,6 +367,15 @@ class GetNetworkDataModule : Module(), SensorEventListener {
             "y" to values[1].toDouble(),
             "z" to values[2].toDouble()
         )
+    }
+
+    private fun clearParticipantCredentials(context: Context) {
+        context.getSharedPreferences(PARTICIPANT_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .remove(PARTICIPANT_ID_KEY)
+            .remove(PARTICIPANT_TOKEN_KEY)
+            .remove(API_BASE_URL_KEY)
+            .apply()
     }
 
     companion object {

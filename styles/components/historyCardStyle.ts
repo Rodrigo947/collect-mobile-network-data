@@ -4,18 +4,10 @@ import { Colors, Typography } from '../../theme';
 export default function useHistoryCardStyle() {
     const styles = StyleSheet.create({
         container: {
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.backgroundLight,
             padding: 10,
             borderRadius: 10,
             marginTop: 10,
-            shadowColor: Colors.shadow,
-            shadowOpacity: 0.29,
-            shadowRadius: 4.65,
-            shadowOffset: {
-                width: 0,
-                height: 6,
-            },
-            elevation: 7,
         },
         label: {
             fontSize: Typography.bodyLarge,
@@ -25,7 +17,7 @@ export default function useHistoryCardStyle() {
         },
         text: {
             fontSize: Typography.body,
-            color: Colors.text,
+            color: Colors.textLabel,
         },
         row: {
             flexDirection: 'row',

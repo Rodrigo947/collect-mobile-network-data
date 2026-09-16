@@ -140,6 +140,18 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
         }
     }
 
+    fun clearContents() {
+        val database = writableDatabase
+        database.beginTransaction()
+        try {
+            database.delete("neighboring_cells", null, null)
+            database.delete("samples", null, null)
+            database.setTransactionSuccessful()
+        } finally {
+            database.endTransaction()
+        }
+    }
+
     fun pendingBatch(): PendingBatch? {
         val database = readableDatabase
         val samples = JSONArray()

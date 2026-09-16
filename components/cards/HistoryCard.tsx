@@ -1,14 +1,6 @@
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useState } from 'react';
-import {
-    PermissionsAndroid,
-    Platform,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import RNFS from 'react-native-fs';
-import Toast from 'react-native-toast-message';
+import { Text, TouchableOpacity, View } from 'react-native';
 import useHistoryCardStyle from '../../styles/components/historyCardStyle';
 import { Colors } from '../../theme';
 import { SampleData, SampleMetrics } from '../../types/sample';
@@ -20,18 +12,17 @@ import {
     calculateTechnologyDistribution,
     calculateTotalDistance,
 } from '../../utils/metrics';
-import AppButton from '../buttons/AppButton';
 
 interface Props {
     samples: SampleData[];
 }
 
-const data = {
+const data: Intl.DateTimeFormatOptions = {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
 };
-const hour = {
+const hour: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -91,62 +82,25 @@ export default function HistoryCard({ samples }: Props) {
 
     const metrics = calculateSampleMetrics(samples);
 
-    const dataFormatada = samples[0]
-        ? new Intl.DateTimeFormat('pt-BR', data).format(samples[0].timestamp)
-        : '';
-    const horaFormatada = samples[0]
-        ? new Intl.DateTimeFormat('pt-BR', hour).format(samples[0].timestamp)
-        : '';
+    let dateFormatted = '';
+    let hourFormatted = '';
+    if (samples && samples[0] && typeof samples[0].timestamp === 'string') {
+        const firstDate = new Date(samples[0].timestamp);
 
-    const handleSaveLocally = async () => {
-        try {
-            if (Platform.OS === 'android') {
-                const granted = await PermissionsAndroid.request(
-                    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-                );
-            }
-
-            const now = new Date();
-            const nameSamples = `coleta_${now.getFullYear()}-${(
-                now.getMonth() + 1
-            )
-                .toString()
-                .padStart(
-                    2,
-                    '0',
-                )}-${now.getDate().toString().padStart(2, '0')}`;
-            const path =
-                Platform.OS === 'android'
-                    ? `${RNFS.DownloadDirectoryPath}/${nameSamples}.json`
-                    : `${RNFS.DocumentDirectoryPath}/${nameSamples}.json`;
-
-            let jsonData = JSON.stringify(samples, null, 2);
-
-            await RNFS.writeFile(path, jsonData, 'utf8');
-
-            Toast.show({
-                type: 'success',
-                position: 'bottom',
-                text1: 'Sucesso',
-                text2: `Coleta salva em: ${path}`,
-            });
-        } catch (error) {
-            Toast.show({
-                type: 'error',
-                position: 'bottom',
-                text1: 'Erro',
-                text2: 'Não foi possível salvar a coleta.',
-            });
-            console.error(error);
-        }
-    };
+        dateFormatted = samples[0]
+            ? new Intl.DateTimeFormat('pt-BR', data).format(firstDate)
+            : '';
+        hourFormatted = samples[0]
+            ? new Intl.DateTimeFormat('pt-BR', hour).format(firstDate)
+            : '';
+    }
 
     return (
         <View style={styles.container}>
             <View style={styles.row}>
                 <View>
                     <Text style={styles.label}>
-                        Coleta: {dataFormatada} {horaFormatada}
+                        Coleta: {dateFormatted} {hourFormatted}
                     </Text>
                     <Text style={styles.text}>Amostras: {samples.length}</Text>
                 </View>
@@ -248,13 +202,6 @@ export default function HistoryCard({ samples }: Props) {
                             </Text>
                         </View>
                     </View>
-                    <AppButton
-                        title="Salvar Localmente"
-                        onPress={async () => {
-                            await handleSaveLocally();
-                        }}
-                        styleButton={styles.saveButton}
-                    />
                 </View>
             )}
         </View>

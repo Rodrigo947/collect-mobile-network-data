@@ -14,6 +14,20 @@ function average(values: Array<number | null | undefined>): number | null {
     return nums.reduce((sum, v) => sum + v, 0) / nums.length;
 }
 
+function timestampInMilliseconds(timestamp: number | string): number {
+    if (typeof timestamp === 'number') {
+        return timestamp;
+    }
+
+    const numericTimestamp = Number(timestamp);
+    if (Number.isFinite(numericTimestamp)) {
+        return numericTimestamp;
+    }
+
+    const parsedTimestamp = Date.parse(timestamp);
+    return Number.isNaN(parsedTimestamp) ? 0 : parsedTimestamp;
+}
+
 function haversineDistanceMeters(a: LocationData, b: LocationData): number {
     const R = 6371000;
     const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -34,7 +48,7 @@ function haversineDistanceMeters(a: LocationData, b: LocationData): number {
 
 function cellKey(cell: CellMetricsData | null | undefined): string | null {
     if (!cell || !cell.registered) return null;
-    
+
     const id = cell.cellId ?? 'no-cellid';
     const pci = cell.pci ?? 'no-pci';
     return `${id}:${pci}`;
@@ -60,8 +74,14 @@ export function calculateDuration(
     if (samples.length < 2) {
         return { ms: 0, seconds: 0, formatted: '0s' };
     }
-    const sorted = [...samples].sort((a, b) => a.timestamp - b.timestamp);
-    const ms = sorted[sorted.length - 1].timestamp - sorted[0].timestamp;
+    const sorted = [...samples].sort(
+        (a, b) =>
+            timestampInMilliseconds(a.timestamp) -
+            timestampInMilliseconds(b.timestamp),
+    );
+    const ms =
+        timestampInMilliseconds(sorted[sorted.length - 1].timestamp) -
+        timestampInMilliseconds(sorted[0].timestamp);
 
     return {
         ms,
@@ -72,7 +92,11 @@ export function calculateDuration(
 
 export function calculateTotalDistance(samples: SampleData[]): number {
     if (samples.length < 2) return 0;
-    const sorted = [...samples].sort((a, b) => a.timestamp - b.timestamp);
+    const sorted = [...samples].sort(
+        (a, b) =>
+            timestampInMilliseconds(a.timestamp) -
+            timestampInMilliseconds(b.timestamp),
+    );
 
     let total = 0;
     for (let i = 1; i < sorted.length; i++) {
@@ -147,7 +171,11 @@ export function calculateHandovers(
     samples: SampleData[],
     distanceMeters?: number,
 ): SampleMetrics['handovers'] {
-    const sorted = [...samples].sort((a, b) => a.timestamp - b.timestamp);
+    const sorted = [...samples].sort(
+        (a, b) =>
+            timestampInMilliseconds(a.timestamp) -
+            timestampInMilliseconds(b.timestamp),
+    );
 
     let count = 0;
     let lastKey: string | null = null;

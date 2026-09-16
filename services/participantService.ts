@@ -112,3 +112,39 @@ export async function registerParticipant(): Promise<RegistrationResponse> {
         token: payload.token,
     };
 }
+
+export async function deleteParticipant(): Promise<boolean> {
+    if (!API_BASE_URL) {
+        throw new Error('A URL base da API não foi configurada.');
+    }
+
+    const token = await StorageService.getParticipantToken();
+
+    if (!token) {
+        throw new Error('Token de autenticação não encontrado.');
+    }
+
+    let response: Response;
+    try {
+        response = await fetch(`${API_BASE_URL}/participant`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+    } catch {
+        throw new Error('Não foi possível conectar à API.');
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            'Falha ao excluir registro do usuário. Tente novamente mais tarde.',
+        );
+    }
+
+    await StorageService.clear();
+    await GetNetworkData.removeParticipantCredentials();
+    await GetNetworkData.clearLocalData();
+
+    return true;
+}

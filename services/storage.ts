@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SampleData } from '../types/sample';
 
 const TERMS_KEY = '@geonetcollect:acceptedTerms';
 const PARTICIPANT_ID_KEY = '@geonetcollect:participantId';
@@ -42,30 +41,6 @@ class StorageService {
 
     async getParticipantToken(): Promise<string | null> {
         return AsyncStorage.getItem(PARTICIPANT_TOKEN_KEY);
-    }
-
-    async insertSamples(samples: SampleData[]): Promise<void> {
-        try {
-            const samplesJson = await AsyncStorage.getItem('samples');
-            const existingSamples = samplesJson ? JSON.parse(samplesJson) : [];
-            existingSamples.push(samples);
-            await AsyncStorage.setItem(
-                'samples',
-                JSON.stringify(existingSamples),
-            );
-        } catch (error) {
-            console.error('Erro ao inserir amostra:', error);
-        }
-    }
-
-    async getSamples(): Promise<SampleData[][]> {
-        try {
-            const samplesJson = await AsyncStorage.getItem('samples');
-            return samplesJson ? JSON.parse(samplesJson) : [];
-        } catch (error) {
-            console.error('Erro ao obter amostras:', error);
-            return [];
-        }
     }
 
     async clear(): Promise<void> {

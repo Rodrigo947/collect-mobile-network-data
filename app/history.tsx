@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 
+import { FontAwesome5 } from '@expo/vector-icons';
 import {
     ActivityIndicator,
-    Button,
-    ScrollView,
+    FlatList,
     Text,
+    TouchableOpacity,
     View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -15,41 +16,107 @@ import {
     getStoredSampleCount,
     sendStoredSamples,
 } from '../services/networkService';
-import StorageService from '../services/storage';
+import { getMySamples } from '../services/samplesService';
 import useHistoryStyleScreen from '../styles/historyStyleScreen';
 import { Colors } from '../theme';
-import { SampleData } from '../types/sample';
+import { APISampleData } from '../types/sample';
 
 export default function HistoryScreen() {
     const styles = useHistoryStyleScreen();
     const [loading, setLoading] = useState(true);
-    const [samples, setSamples] = useState<SampleData[][]>([]);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [samples, setSamples] = useState<APISampleData['batches']>([]);
+    const [pagination, setPagination] = useState<{
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    } | null>(null);
     const [storedSampleCount, setStoredSampleCount] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
-        const fetchSamples = async () => {
-            const storedSamples = await StorageService.getSamples();
-            setSamples(storedSamples);
-            setStoredSampleCount(await getStoredSampleCount());
-            setLoading(false);
-        };
-
-        fetchSamples();
+        fetchSamples(1);
     }, []);
+
+    const fetchSamples = async (page: number) => {
+        try {
+            if (page === 1) {
+                setLoading(true);
+                setError(null);
+            } else {
+                setLoadingMore(true);
+            }
+
+            const mySamples = await getMySamples(page);
+            setSamples(previousSamples =>
+                page === 1
+                    ? mySamples.batches
+                    : [...previousSamples, ...mySamples.batches],
+            );
+            setPagination(mySamples.pagination);
+            setCurrentPage(mySamples.pagination.page);
+            setStoredSampleCount(await getStoredSampleCount());
+        } catch (err) {
+            if (page === 1) {
+                setError(
+                    err instanceof Error
+                        ? err.message
+                        : 'Ocorreu um erro ao buscar as coletas.',
+                );
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Falha ao carregar mais coletas',
+                    text2:
+                        err instanceof Error ? err.message : 'Tente novamente.',
+                });
+            }
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    };
+
+    const handleLoadMore = () => {
+        if (
+            loading ||
+            loadingMore ||
+            !pagination ||
+            currentPage >= pagination.totalPages
+        ) {
+            return;
+        }
+
+        fetchSamples(currentPage + 1);
+    };
 
     const handleSendStoredSamples = async () => {
         try {
+            if (storedSampleCount === 0) {
+                Toast.show({
+                    type: 'info',
+                    text1: 'Nenhuma coleta para enviar',
+                    text2: 'Não há coletas armazenadas localmente para serem enviadas.',
+                });
+                return;
+            }
+            setLoading(true);
             const sent = await sendStoredSamples();
             if (sent) {
                 setStoredSampleCount(await getStoredSampleCount());
+                await fetchSamples(1);
+                Toast.show({
+                    type: sent ? 'success' : 'error',
+                    text1: sent
+                        ? 'Coletas enviadas'
+                        : 'Falha ao enviar coletas',
+                    text2: sent
+                        ? 'Os dados foram enviados com sucesso.'
+                        : 'Nenhum dado foi enviado.',
+                });
             }
-            Toast.show({
-                type: sent ? 'success' : 'error',
-                text1: sent ? 'Coletas enviadas' : 'Falha ao enviar coletas',
-                text2: sent
-                    ? 'Os dados foram enviados com sucesso.'
-                    : 'Nenhum dado foi enviado.',
-            });
         } catch (error) {
             Toast.show({
                 type: 'error',
@@ -61,10 +128,37 @@ export default function HistoryScreen() {
     };
 
     return (
-        <ScreenContainer>
+        <ScreenContainer style={styles.container}>
             <AppHeader title="Histórico" showBackButton={true} />
-            <Text>Coletas armazenadas: {storedSampleCount}</Text>
-            <Button title="Enviar coletas" onPress={handleSendStoredSamples} />
+            <View style={styles.localSamples}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.localSamplesLabel}>
+                        Coletas salvas localmente:{' '}
+                    </Text>
+                    <Text style={styles.localSamplesValue}>
+                        {storedSampleCount}
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    onPress={handleSendStoredSamples}
+                    style={[
+                        styles.localSamplesUploadButton,
+                        {
+                            backgroundColor:
+                                storedSampleCount > 0
+                                    ? Colors.primary
+                                    : Colors.disabled,
+                        },
+                    ]}
+                >
+                    <FontAwesome5
+                        name={'upload'}
+                        size={22}
+                        color={Colors.backgroundLight}
+                    />
+                </TouchableOpacity>
+            </View>
+            <View style={styles.separator} />
             {loading ? (
                 <View style={styles.noSamplesContainer}>
                     <ActivityIndicator
@@ -73,6 +167,10 @@ export default function HistoryScreen() {
                         style={styles.loader}
                     />
                 </View>
+            ) : error ? (
+                <View style={styles.noSamplesContainer}>
+                    <Text style={styles.noSamplesText}>{error}</Text>
+                </View>
             ) : samples.length === 0 ? (
                 <View style={styles.noSamplesContainer}>
                     <Text style={styles.noSamplesText}>
@@ -80,11 +178,30 @@ export default function HistoryScreen() {
                     </Text>
                 </View>
             ) : (
-                <ScrollView style={styles.container}>
-                    {samples.map((sampleGroup, index) => (
-                        <HistoryCard key={index} samples={sampleGroup} />
-                    ))}
-                </ScrollView>
+                <FlatList
+                    data={samples}
+                    keyExtractor={sample => sample.id}
+                    style={styles.listContainer}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListHeaderComponent={
+                        <Text style={styles.remoteSamplesLabel}>
+                            Coletas salvas remotamente
+                        </Text>
+                    }
+                    renderItem={({ item }) => (
+                        <HistoryCard samples={item.measurements} />
+                    )}
+                    ListFooterComponent={
+                        loadingMore ? (
+                            <ActivityIndicator
+                                size="small"
+                                color={Colors.primary}
+                                style={styles.loader}
+                            />
+                        ) : null
+                    }
+                />
             )}
         </ScreenContainer>
     );

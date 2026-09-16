@@ -3,11 +3,29 @@ import { CellMetricsData } from './network';
 import { MotionData } from './sensor';
 
 export interface SampleData {
-    timestamp: number;
+    timestamp: number | string;
+    receivedAt: number | null;
     location: LocationData;
     motion: MotionData;
     servingCell: CellMetricsData | null;
     neighboringCells: CellMetricsData[];
+}
+
+export interface SampleBatch {
+    id: string;
+    measurementCount: number;
+    createdAt: string;
+    measurements: SampleData[];
+}
+
+export interface APISampleData {
+    batches: SampleBatch[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
 }
 
 export interface SampleMetrics {
