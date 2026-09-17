@@ -1,7 +1,6 @@
 import React from 'react';
 import { StatusBar, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
 import useScreenContainerStyle from '../../styles/components/screenContainerStyle';
 import Colors from '../../theme/colors';
 
@@ -29,7 +28,6 @@ export default function ScreenContainer({
             />
             <SafeAreaView style={styles.container}>
                 <View style={[styles.content, style]}>{children}</View>
-                <Toast />
             </SafeAreaView>
         </>
     );

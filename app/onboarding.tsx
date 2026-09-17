@@ -9,10 +9,10 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import Toast from 'react-native-toast-message';
 import AppButton from '../components/buttons/AppButton';
 import OnBoardingCard from '../components/cards/OnBoardingCard';
 import ScreenContainer from '../components/layout/ScreenContainer';
+import ModalInfo from '../components/modals/ModalInfo';
 import { registerParticipant } from '../services/participantService';
 import StorageService from '../services/storage';
 import useOnboardingStyleScreen from '../styles/onboardingStyleScreen';
@@ -65,6 +65,9 @@ export default function OnboardingScreen() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isRegistering, setIsRegistering] = useState(false);
 
+    const [showModal, setShowModal] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
+
     const lastIndex = DATA.length - 1;
 
     const handleScroll = useCallback((event: any) => {
@@ -89,14 +92,10 @@ export default function OnboardingScreen() {
                 await StorageService.acceptTerms();
                 router.replace('/permissions');
             } catch (error) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Não foi possível registrar o aplicativo',
-                    text2:
-                        error instanceof Error
-                            ? error.message
-                            : 'Tente novamente.',
-                });
+                setModalMessage(
+                    'Não foi possível registrar o aplicativo. Tente novamente.',
+                );
+                setShowModal(true);
             } finally {
                 setIsRegistering(false);
             }
@@ -144,6 +143,12 @@ export default function OnboardingScreen() {
     return (
         <ScreenContainer style={styles.container} showStatusBar={false}>
             <StatusBar barStyle="light-content" />
+            <ModalInfo
+                title={'Aviso'}
+                visible={showModal}
+                message={modalMessage}
+                onClose={() => setShowModal(false)}
+            />
             {currentIndex < lastIndex && (
                 <TouchableOpacity
                     style={styles.skipButton}

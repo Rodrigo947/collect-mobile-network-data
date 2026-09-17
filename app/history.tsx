@@ -8,10 +8,10 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import Toast from 'react-native-toast-message';
 import HistoryCard from '../components/cards/HistoryCard';
 import AppHeader from '../components/layout/AppHeader';
 import ScreenContainer from '../components/layout/ScreenContainer';
+import ModalInfo from '../components/modals/ModalInfo';
 import {
     getStoredSampleCount,
     sendStoredSamples,
@@ -35,6 +35,10 @@ export default function HistoryScreen() {
     } | null>(null);
     const [storedSampleCount, setStoredSampleCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
+
+    const [showModal, setShowModal] = useState(false);
+    const [modalTitle, setModalTitle] = useState('');
+    const [modalMessage, setModalMessage] = useState('');
 
     useEffect(() => {
         fetchSamples(1);
@@ -66,12 +70,11 @@ export default function HistoryScreen() {
                         : 'Ocorreu um erro ao buscar as coletas.',
                 );
             } else {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Falha ao carregar mais coletas',
-                    text2:
-                        err instanceof Error ? err.message : 'Tente novamente.',
-                });
+                setModalTitle('Erro!');
+                setModalMessage(
+                    'Falha ao carregar mais coletas. Tente novamente.',
+                );
+                setShowModal(true);
             }
         } finally {
             setLoading(false);
@@ -95,11 +98,11 @@ export default function HistoryScreen() {
     const handleSendStoredSamples = async () => {
         try {
             if (storedSampleCount === 0) {
-                Toast.show({
-                    type: 'info',
-                    text1: 'Nenhuma coleta para enviar',
-                    text2: 'Não há coletas armazenadas localmente para serem enviadas.',
-                });
+                setModalTitle('Nenhuma coleta para enviar');
+                setModalMessage(
+                    'Não há coletas armazenadas localmente para serem enviadas.',
+                );
+                setShowModal(true);
                 return;
             }
             setLoading(true);
@@ -107,29 +110,26 @@ export default function HistoryScreen() {
             if (sent) {
                 setStoredSampleCount(await getStoredSampleCount());
                 await fetchSamples(1);
-                Toast.show({
-                    type: sent ? 'success' : 'error',
-                    text1: sent
-                        ? 'Coletas enviadas'
-                        : 'Falha ao enviar coletas',
-                    text2: sent
-                        ? 'Os dados foram enviados com sucesso.'
-                        : 'Nenhum dado foi enviado.',
-                });
+                setModalTitle('Coletas enviadas');
+                setModalMessage('Os dados foram enviados com sucesso.');
+                setShowModal(true);
             }
         } catch (error) {
-            Toast.show({
-                type: 'error',
-                text1: 'Falha ao enviar coletas',
-                text2:
-                    error instanceof Error ? error.message : 'Tente novamente.',
-            });
+            setModalTitle('Erro');
+            setModalMessage('Falha ao enviar coletas. Tente novamente.');
+            setShowModal(true);
         }
     };
 
     return (
         <ScreenContainer style={styles.container}>
             <AppHeader title="Histórico" showBackButton={true} />
+            <ModalInfo
+                title={modalTitle}
+                visible={showModal}
+                message={modalMessage}
+                onClose={() => setShowModal(false)}
+            />
             <View style={styles.localSamples}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={styles.localSamplesLabel}>

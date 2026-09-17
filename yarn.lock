@@ -3461,11 +3461,6 @@ react-native-screens@^4.26.0, react-native-screens@~4.26.0:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
-react-native-toast-message@^2.4.0:
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/react-native-toast-message/-/react-native-toast-message-2.4.0.tgz#c2f0948fd43881feaabab67f4e047134ac000565"
-  integrity sha512-Ip4sPpf9707Qmn06Jp1aGJrYLx2mwTYBRjXzP7ebPvmjABA6OCT9bEh62E0L6s5zc/KPZ3rix+OnBKW/pOJZ4g==
-
 react-native-vector-icons@^10.3.0:
   version "10.3.0"
   resolved "https://registry.yarnpkg.com/react-native-vector-icons/-/react-native-vector-icons-10.3.0.tgz#de440f2627a2ed1079ce3b99d5b9d4f86894df28"

@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import Toast from 'react-native-toast-message';
 import AppButton from '../components/buttons/AppButton';
 import ScreenContainer from '../components/layout/ScreenContainer';
+import ModalInfo from '../components/modals/ModalInfo';
 import { requestRequiredPermissions } from '../services/permissionsService';
 import usePermissionsStyleScreen from '../styles/permissionsStyleScreen';
 
@@ -11,6 +11,9 @@ export default function PermissionsScreen() {
     const styles = usePermissionsStyleScreen();
     const router = useRouter();
     const [requesting, setRequesting] = useState(false);
+
+    const [showModal, setShowModal] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
 
     const handleNext = async () => {
         if (requesting) return;
@@ -21,19 +24,16 @@ export default function PermissionsScreen() {
             if (granted) {
                 router.replace('/home');
             } else {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Permissões pendentes',
-                    text2: 'Conceda todas as permissões para continuar.',
-                });
+                setModalMessage(
+                    'Não foi possível conceder todas as permissões necessárias. Por favor, conceda todas as permissões para continuar.',
+                );
+                setShowModal(true);
             }
         } catch (error) {
-            Toast.show({
-                type: 'error',
-                text1: 'Erro ao solicitar permissões',
-                text2:
-                    error instanceof Error ? error.message : 'Tente novamente.',
-            });
+            setModalMessage(
+                'Ocorreu um erro ao solicitar as permissões. Tente novamente.',
+            );
+            setShowModal(true);
         } finally {
             setRequesting(false);
         }
@@ -41,6 +41,12 @@ export default function PermissionsScreen() {
 
     return (
         <ScreenContainer style={styles.container} showStatusBar={false}>
+            <ModalInfo
+                title={'Aviso'}
+                visible={showModal}
+                message={modalMessage}
+                onClose={() => setShowModal(false)}
+            />
             <Text style={styles.title}>
                 Para utilizar o aplicativo, é necessário conceder as seguintes
                 permissões:
