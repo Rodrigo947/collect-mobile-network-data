@@ -9,11 +9,13 @@ export default function useSettingsStyleScreen() {
             backgroundColor: Colors.white,
         },
         cardContainer: {
-            backgroundColor: Colors.backgroundLight,
+            backgroundColor: Colors.white,
             margin: 15,
             marginBottom: 5,
             padding: 10,
             borderRadius: 10,
+            borderWidth: 1,
+            borderColor: Colors.border,
         },
         excludeButtonContainer: {
             margin: 15,

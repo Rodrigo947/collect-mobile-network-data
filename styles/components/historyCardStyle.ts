@@ -4,10 +4,12 @@ import { Colors, Typography } from '../../theme';
 export default function useHistoryCardStyle() {
     const styles = StyleSheet.create({
         container: {
-            backgroundColor: Colors.backgroundLight,
+            backgroundColor: Colors.white,
             padding: 10,
             borderRadius: 10,
             marginTop: 10,
+            borderWidth: 1,
+            borderColor: Colors.border,
         },
         label: {
             fontSize: Typography.bodyLarge,

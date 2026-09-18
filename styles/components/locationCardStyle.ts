@@ -8,14 +8,8 @@ export default function useLocationCardStyle() {
             padding: 10,
             borderRadius: 10,
             marginTop: 10,
-            shadowColor: Colors.shadow,
-            shadowOpacity: 0.29,
-            shadowRadius: 4.65,
-            shadowOffset: {
-                width: 0,
-                height: 6,
-            },
-            elevation: 7,
+            borderWidth: 1,
+            borderColor: Colors.border,
         },
         title: {
             fontSize: Typography.h4,
@@ -29,7 +23,21 @@ export default function useLocationCardStyle() {
             alignItems: 'center',
             marginBottom: 5,
         },
-        text: {
+        item: {
+            flex: 1,
+            justifyContent: 'center',
+            padding: 5,
+            marginHorizontal: 5,
+        },
+        rowItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        label: {
+            fontSize: Typography.bodyLarge,
+            color: Colors.textLabel,
+        },
+        value: {
             fontSize: Typography.body,
             color: Colors.text,
         },

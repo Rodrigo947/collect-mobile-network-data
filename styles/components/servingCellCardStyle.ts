@@ -8,14 +8,8 @@ export default function useServingCellCardStyle() {
             padding: 10,
             borderRadius: 10,
             marginTop: 10,
-            shadowColor: Colors.shadow,
-            shadowOpacity: 0.29,
-            shadowRadius: 4.65,
-            shadowOffset: {
-                width: 0,
-                height: 6,
-            },
-            elevation: 7,
+            borderWidth: 1,
+            borderColor: Colors.border,
         },
         title: {
             fontSize: Typography.h4,
@@ -29,9 +23,39 @@ export default function useServingCellCardStyle() {
             alignItems: 'center',
             marginBottom: 5,
         },
-        text: {
+        label: {
+            fontSize: Typography.body,
+            color: Colors.textLabel,
+        },
+        value: {
             fontSize: Typography.body,
             color: Colors.text,
+        },
+        rowSignals: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 5,
+        },
+        gauge: {
+            width: '48%',
+            height: 92,
+            alignItems: 'center',
+            position: 'relative',
+        },
+        gaugeValue: {
+            position: 'absolute',
+            top: 36,
+            alignItems: 'center',
+        },
+        gaugeNumber: {
+            fontSize: Typography.bodyLarge,
+            fontWeight: 'bold',
+            color: Colors.text,
+        },
+        gaugeLabel: {
+            fontSize: Typography.bodySmall,
+            color: Colors.textLabel,
         },
     });
 

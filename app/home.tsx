@@ -171,10 +171,8 @@ export default function HomeScreen() {
             />
             <ScrollView style={styles.content}>
                 <View style={styles.overviewContainer}>
-                    <Text style={styles.noCell}>
-                        {isCollecting
-                            ? 'Coleta em segundo plano ativa'
-                            : 'Coleta em segundo plano parada'}
+                    <Text style={styles.statusText}>
+                        Status: {isCollecting ? 'Coletando...' : 'Parado'}
                     </Text>
                     <TouchableOpacity
                         onPress={handleHistory}
@@ -202,12 +200,13 @@ export default function HomeScreen() {
                 <ServingCellCard
                     isCollecting={isCollecting}
                     isLoading={isLoading}
-                    cellID={servingCell?.pci}
+                    cellID={servingCell?.cellId}
+                    pci={servingCell?.pci}
+                    arfcn={servingCell?.arfcn}
+                    timingAdvance={servingCell?.timingAdvance}
                     technology={servingCell?.technology}
                     RSRP={servingCell?.rsrp}
                     RSRQ={servingCell?.rsrq}
-                    RSSI={servingCell?.rssi}
-                    SINR={servingCell?.sinr}
                 />
                 <View style={styles.neighboringCellsContainer}>
                     <Text style={styles.neighboringCellsTitle}>

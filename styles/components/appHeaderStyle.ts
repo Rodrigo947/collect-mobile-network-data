@@ -12,6 +12,7 @@ export default function useAppHeaderStyle() {
             justifyContent: 'space-between',
             paddingHorizontal: 16,
             height: 56,
+            zIndex: 10,
         },
         backButton: {
             padding: 4,

@@ -7,7 +7,7 @@ export default function useHomeStyleScreen() {
             flex: 1,
             justifyContent: 'space-between',
             alignItems: 'center',
-            backgroundColor: Colors.background,
+            backgroundColor: Colors.white,
         },
 
         content: {
@@ -15,6 +15,14 @@ export default function useHomeStyleScreen() {
             width: '100%',
             top: -20,
             padding: 10,
+            position: 'relative',
+            elevation: 0,
+        },
+        statusText: {
+            fontSize: Typography.bodyLarge,
+            color: Colors.textLabel,
+            textAlign: 'center',
+            paddingVertical: 10,
         },
         startButtonContainer: {
             width: '100%',
@@ -27,7 +35,10 @@ export default function useHomeStyleScreen() {
             width: '100%',
         },
         historyButton: {
-            padding: 4,
+            padding: 10,
+            borderWidth: 1,
+            borderColor: Colors.border,
+            borderRadius: 10,
         },
         overviewContainer: {
             display: 'flex',
@@ -66,18 +77,12 @@ export default function useHomeStyleScreen() {
             color: Colors.text,
         },
         neighboringCellsContainer: {
-            backgroundColor: Colors.backgroundLight,
+            backgroundColor: Colors.white,
             padding: 10,
             borderRadius: 10,
             marginTop: 10,
-            shadowColor: Colors.shadow,
-            shadowOpacity: 0.29,
-            shadowRadius: 4.65,
-            shadowOffset: {
-                width: 0,
-                height: 6,
-            },
-            elevation: 7,
+            borderWidth: 1,
+            borderColor: Colors.border,
         },
         neighboringCellsTitle: {
             fontSize: Typography.h4,

@@ -13,7 +13,9 @@ export default function useHistoryStyleScreen() {
             alignItems: 'center',
             margin: 10,
             padding: 15,
-            backgroundColor: Colors.backgroundLight,
+            backgroundColor: Colors.white,
+            borderWidth: 1,
+            borderColor: Colors.border,
             borderRadius: 8,
         },
         localSamplesLabel: {
