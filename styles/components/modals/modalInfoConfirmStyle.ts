@@ -20,6 +20,9 @@ export default function useModalInfoStyle() {
             shadowRadius: 4,
             elevation: 5,
         },
+        contentConfirm: {
+            marginBottom: 160,
+        },
         title: {
             color: Colors.text,
             fontWeight: 'bold',
@@ -52,6 +55,24 @@ export default function useModalInfoStyle() {
             flexDirection: 'row',
             justifyContent: 'space-between',
             marginTop: 10,
+        },
+        input: {
+            borderWidth: 1,
+            borderColor: Colors.border,
+            marginVertical: 10,
+            color: Colors.text,
+            padding: 10,
+        },
+        error: {
+            color: Colors.danger,
+            fontSize: Typography.body,
+            marginBottom: 15,
+        },
+        xClose: {
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            padding: 10,
         },
     });
 

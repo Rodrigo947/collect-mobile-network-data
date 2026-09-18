@@ -5,6 +5,12 @@ import { SampleData } from '../types/sample';
 
 const GetNetworkData = requireNativeModule('GetNetworkData');
 
+export async function setEnvironment(
+    environment: string | null,
+): Promise<void> {
+    await GetNetworkData.setEnvironment(environment);
+}
+
 export async function getNetworkMetrics(): Promise<NetworkSnapshotData> {
     const result = await GetNetworkData.getNetworkMetrics();
 

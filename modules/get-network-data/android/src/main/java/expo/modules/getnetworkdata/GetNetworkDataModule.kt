@@ -53,6 +53,16 @@ class GetNetworkDataModule : Module(), SensorEventListener {
             mapOf("saved" to true)
         }
 
+        AsyncFunction("setEnvironment") { environment: String? ->
+            val context = appContext.reactContext
+                ?: throw Exception("React context unavailable")
+            context.getSharedPreferences(PARTICIPANT_PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putString(ENVIRONMENT_KEY, environment?.trim()?.takeIf { it.isNotEmpty() })
+                .apply()
+            mapOf("saved" to true)
+        }
+
         AsyncFunction("clearLocalData") {
             val context = appContext.reactContext
                 ?: throw Exception("React context unavailable")
@@ -383,5 +393,6 @@ class GetNetworkDataModule : Module(), SensorEventListener {
         const val PARTICIPANT_ID_KEY = "participant_id"
         const val PARTICIPANT_TOKEN_KEY = "participant_token"
         const val API_BASE_URL_KEY = "api_base_url"
+        const val ENVIRONMENT_KEY = "environment"
     }
 }

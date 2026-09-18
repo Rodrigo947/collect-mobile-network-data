@@ -18,6 +18,7 @@ const Colors = {
     border: '#E2E8F0',
     text: '#13203f',
     textLight: '#E2E8F0',
+    placeholder: '#8f97a0',
     textSecondary: '#64748B',
     disabled: '#CBD5E1',
     white: '#FFFFFF',

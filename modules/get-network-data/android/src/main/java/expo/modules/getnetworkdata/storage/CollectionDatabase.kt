@@ -25,6 +25,7 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
                 sent INTEGER NOT NULL DEFAULT 0,
                 operator TEXT,
                 network_type TEXT,
+                environment TEXT,
                 latitude REAL,
                 longitude REAL,
                 altitude REAL,
@@ -81,9 +82,17 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
     }
 
     override fun onUpgrade(database: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        database.execSQL("DROP TABLE IF EXISTS neighboring_cells")
-        database.execSQL("DROP TABLE IF EXISTS samples")
-        onCreate(database)
+        if (oldVersion < 2) {
+            val hasEnvironmentColumn = database.rawQuery("PRAGMA table_info(samples)", null).use { cursor ->
+                val nameIndex = cursor.getColumnIndexOrThrow("name")
+                generateSequence {
+                    if (cursor.moveToNext()) cursor.getString(nameIndex) else null
+                }.any { it == "environment" }
+            }
+            if (!hasEnvironmentColumn) {
+                database.execSQL("ALTER TABLE samples ADD COLUMN environment TEXT")
+            }
+        }
     }
 
     fun insertSample(
@@ -91,6 +100,7 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
         location: Map<String, Any?>?,
         accelerometer: Map<String, Double>?,
         gyroscope: Map<String, Double>?,
+        environment: String?,
         snapshot: NetworkSnapshot
     ) {
         val database = writableDatabase
@@ -101,6 +111,7 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
                 put("sent", 0)
                 put("operator", snapshot.operator)
                 put("network_type", snapshot.networkType)
+                putNullable("environment", environment)
                 putNullable("latitude", location?.get("latitude"))
                 putNullable("longitude", location?.get("longitude"))
                 putNullable("altitude", location?.get("altitude"))
@@ -214,6 +225,7 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
             }
         }
         val result = JSONObject().put("timestamp", cursor.getLong(cursor.getColumnIndexOrThrow("timestamp")))
+        result.putNullable("environment", text("environment"))
         result.put("location", JSONObject().apply {
             putNumber("latitude", value("latitude")); putNumber("longitude", value("longitude"))
             putNumber("altitude", value("altitude")); putNumber("accuracy", value("accuracy"))
@@ -311,7 +323,7 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
 
     companion object {
         private const val DATABASE_NAME = "collection_data.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         fun initialize(context: Context) {
             CollectionDatabase(context).writableDatabase.close()

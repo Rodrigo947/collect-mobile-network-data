@@ -20,6 +20,7 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.mobility.network.repository.TelephonyRepository
+import expo.modules.getnetworkdata.GetNetworkDataModule
 import expo.modules.getnetworkdata.storage.CollectionDatabase
 import expo.modules.getnetworkdata.service.CollectionBatchSender
 
@@ -94,6 +95,10 @@ class CollectionForegroundService : Service(), SensorEventListener {
             location = latestLocation?.let { locationToMap(it) },
             accelerometer = accelerometer?.let { vectorToMap(it) },
             gyroscope = gyroscope?.let { vectorToMap(it) },
+            environment = getSharedPreferences(
+                GetNetworkDataModule.PARTICIPANT_PREFS,
+                MODE_PRIVATE
+            ).getString(GetNetworkDataModule.ENVIRONMENT_KEY, null),
             snapshot = snapshot
         )
         val count = database.sampleCount()

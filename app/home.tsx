@@ -10,9 +10,12 @@ import NeighboringCellCard from '../components/cards/NeighboringCellCard';
 import ServingCellCard from '../components/cards/ServingCellCard';
 import AppHeader from '../components/layout/AppHeader';
 import ScreenContainer from '../components/layout/ScreenContainer';
+import ModalEnvironmentType from '../components/modals/ModalEnvironmentType';
+import ModalInfo from '../components/modals/ModalInfo';
 import {
     getCollectionData,
     getCollectionServiceStatus,
+    setEnvironment,
     startCollectionService,
     stopCollectionService,
 } from '../services/networkService';
@@ -42,24 +45,34 @@ export default function HomeScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const collectionInFlightRef = useRef(false);
 
+    //Modal
+    const [showModalEnv, setShowModalEnv] = useState(false);
+    const [showModalInfo, setShowModalInfo] = useState(false);
+    const handleModalSetEnvironmentAndStart = async (env: string) => {
+        try {
+            await setEnvironment(env);
+            setShowModalEnv(false);
+            const started = await startCollectionService();
+            if (started) {
+                setIsCollecting(true);
+                setServingCell(null);
+                setNeighboringCells([]);
+            }
+        } catch (error) {
+            setShowModalInfo(true);
+            console.warn(
+                'Falha ao iniciar coleta em segundo plano:',
+                error instanceof Error ? error.message : error,
+            );
+        }
+    };
+
     const handleStartCollecting = async () => {
         if (isCollecting) {
             await stopCollectionService();
             setIsCollecting(false);
         } else {
-            try {
-                const started = await startCollectionService();
-                if (started) {
-                    setIsCollecting(true);
-                    setServingCell(null);
-                    setNeighboringCells([]);
-                }
-            } catch (error) {
-                console.warn(
-                    'Falha ao iniciar coleta em segundo plano:',
-                    error instanceof Error ? error.message : error,
-                );
-            }
+            setShowModalEnv(true);
         }
     };
 
@@ -145,6 +158,17 @@ export default function HomeScreen() {
                 iconRightName="gear"
                 onRightPress={handleSettings}
             />
+            <ModalEnvironmentType
+                visible={showModalEnv}
+                onClose={() => setShowModalEnv(false)}
+                onInsert={handleModalSetEnvironmentAndStart}
+            />
+            <ModalInfo
+                visible={showModalInfo}
+                title="Erro"
+                message="Falha ao iniciar coleta em segundo plano."
+                onClose={() => setShowModalInfo(false)}
+            />
             <ScrollView style={styles.content}>
                 <View style={styles.overviewContainer}>
                     <Text style={styles.noCell}>
@@ -226,7 +250,7 @@ export default function HomeScreen() {
                             : Colors.backgroundButtonStart,
                     }}
                     rightIcon={isCollecting ? 'stop' : 'play'}
-                    onPress={handleStartCollecting}
+                    onPress={() => handleStartCollecting()}
                 />
             </View>
         </ScreenContainer>

@@ -45,7 +45,7 @@ export default function SplashScreen() {
 
     return (
         <ScreenContainer style={styles.container} showStatusBar={false}>
-            <View>
+            <View style={styles.content}>
                 <Image
                     source={require('../assets/images/logo.png')}
                     style={styles.logo}

@@ -9,6 +9,11 @@ export default function useIndexStyleScreen() {
             alignItems: 'center',
             backgroundColor: Colors.white,
         },
+        content: {
+            width: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
         logo: {
             width: 150,
             height: 150,
