@@ -87,6 +87,9 @@ export async function startCollectionService(): Promise<boolean> {
 
 export async function stopCollectionService(): Promise<boolean> {
     const result = await GetNetworkData.stopCollectionService();
+    if (result?.error) {
+        throw new Error(result.message ?? 'Falha ao parar a coleta.');
+    }
     return result.running === true;
 }
 
@@ -101,5 +104,9 @@ export async function getStoredSampleCount(): Promise<number> {
 }
 
 export async function sendStoredSamples(): Promise<boolean> {
-    return (await GetNetworkData.sendStoredSamples()) === true;
+    const result = await GetNetworkData.sendStoredSamples();
+    if (result?.error) {
+        throw new Error(result.message ?? 'Falha ao enviar as coletas.');
+    }
+    return result.sent === true;
 }

@@ -48,6 +48,7 @@ export default function HomeScreen() {
     //Modal
     const [showModalEnv, setShowModalEnv] = useState(false);
     const [showModalInfo, setShowModalInfo] = useState(false);
+    const [modalInfoMessage, setModalInfoMessage] = useState('');
     const handleModalSetEnvironmentAndStart = async (env: string) => {
         try {
             await setEnvironment(env);
@@ -59,6 +60,11 @@ export default function HomeScreen() {
                 setNeighboringCells([]);
             }
         } catch (error) {
+            setModalInfoMessage(
+                error instanceof Error
+                    ? error.message
+                    : 'Falha ao iniciar coleta em segundo plano.',
+            );
             setShowModalInfo(true);
             console.warn(
                 'Falha ao iniciar coleta em segundo plano:',
@@ -69,8 +75,17 @@ export default function HomeScreen() {
 
     const handleStartCollecting = async () => {
         if (isCollecting) {
-            await stopCollectionService();
-            setIsCollecting(false);
+            try {
+                await stopCollectionService();
+                setIsCollecting(false);
+            } catch (error) {
+                setModalInfoMessage(
+                    error instanceof Error
+                        ? error.message
+                        : 'Falha ao parar a coleta.',
+                );
+                setShowModalInfo(true);
+            }
         } else {
             setShowModalEnv(true);
         }
@@ -166,7 +181,7 @@ export default function HomeScreen() {
             <ModalInfo
                 visible={showModalInfo}
                 title="Erro"
-                message="Falha ao iniciar coleta em segundo plano."
+                message={modalInfoMessage}
                 onClose={() => setShowModalInfo(false)}
             />
             <ScrollView style={styles.content}>

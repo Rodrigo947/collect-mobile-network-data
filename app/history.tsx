@@ -116,7 +116,11 @@ export default function HistoryScreen() {
             }
         } catch (error) {
             setModalTitle('Erro');
-            setModalMessage('Falha ao enviar coletas. Tente novamente.');
+            setModalMessage(
+                error instanceof Error
+                    ? error.message
+                    : 'Falha ao enviar coletas. Tente novamente.',
+            );
             setShowModal(true);
         }
     };

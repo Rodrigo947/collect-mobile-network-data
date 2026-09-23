@@ -109,14 +109,27 @@ class GetNetworkDataModule : Module(), SensorEventListener {
         }
 
         AsyncFunction("stopCollectionService") {
-            val context = appContext.reactContext
-                ?: throw Exception("React context unavailable")
-            context.stopService(Intent(context, CollectionForegroundService::class.java))
-            context.getSharedPreferences(
-                CollectionForegroundService.STATUS_PREFS,
-                Context.MODE_PRIVATE
-            ).edit().putBoolean(CollectionForegroundService.STATUS_KEY, false).apply()
-            mapOf("running" to false)
+            try {
+                val context = appContext.reactContext
+                    ?: throw Exception("React context unavailable")
+                val sendResult = CollectionBatchSender(context).sendWithError()
+                context.stopService(Intent(context, CollectionForegroundService::class.java))
+                context.getSharedPreferences(
+                    CollectionForegroundService.STATUS_PREFS,
+                    Context.MODE_PRIVATE
+                ).edit().putBoolean(CollectionForegroundService.STATUS_KEY, false).apply()
+                if (sendResult["error"] != null && sendResult["error"] != "NO_PENDING_SAMPLES") {
+                    mapOf(
+                        "running" to false,
+                        "error" to sendResult["error"],
+                        "message" to sendResult["message"]
+                    )
+                } else {
+                    mapOf("running" to false)
+                }
+            } catch (e: Exception) {
+                mapOf("running" to false, "error" to "STOP_SERVICE_ERROR", "message" to (e.message ?: "Falha ao parar a coleta."))
+            }
         }
 
         AsyncFunction("getCollectionServiceStatus") {
@@ -136,9 +149,13 @@ class GetNetworkDataModule : Module(), SensorEventListener {
         }
 
         AsyncFunction("sendStoredSamples") {
-            val context = appContext.reactContext
-                ?: throw Exception("React context unavailable")
-            CollectionBatchSender(context).send()
+            try {
+                val context = appContext.reactContext
+                    ?: throw Exception("React context unavailable")
+                CollectionBatchSender(context).sendWithError()
+            } catch (e: Exception) {
+                mapOf("sent" to false, "error" to "SEND_MODULE_ERROR", "message" to (e.message ?: "Falha ao enviar as coletas."))
+            }
         }
 
         AsyncFunction("getNetworkMetrics") {
