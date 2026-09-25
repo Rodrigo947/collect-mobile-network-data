@@ -95,10 +95,14 @@ class CollectionForegroundService : Service(), SensorEventListener {
             location = latestLocation?.let { locationToMap(it) },
             accelerometer = accelerometer?.let { vectorToMap(it) },
             gyroscope = gyroscope?.let { vectorToMap(it) },
-            environment = getSharedPreferences(
+            morphology = getSharedPreferences(
                 GetNetworkDataModule.PARTICIPANT_PREFS,
                 MODE_PRIVATE
-            ).getString(GetNetworkDataModule.ENVIRONMENT_KEY, null),
+            ).getString(GetNetworkDataModule.MORPHOLOGY_KEY, null),
+            topography = getSharedPreferences(
+                GetNetworkDataModule.PARTICIPANT_PREFS,
+                MODE_PRIVATE
+            ).getString(GetNetworkDataModule.TOPOGRAPHY_KEY, null),
             snapshot = snapshot
         )
         val count = database.sampleCount()

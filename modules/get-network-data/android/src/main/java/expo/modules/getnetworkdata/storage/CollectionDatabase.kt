@@ -25,7 +25,8 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
                 sent INTEGER NOT NULL DEFAULT 0,
                 operator TEXT,
                 network_type TEXT,
-                environment TEXT,
+                morphology TEXT,
+                topography TEXT,
                 latitude REAL,
                 longitude REAL,
                 altitude REAL,
@@ -83,14 +84,24 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
 
     override fun onUpgrade(database: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
-            val hasEnvironmentColumn = database.rawQuery("PRAGMA table_info(samples)", null).use { cursor ->
+            val hasMorphologyColumn = database.rawQuery("PRAGMA table_info(samples)", null).use { cursor ->
                 val nameIndex = cursor.getColumnIndexOrThrow("name")
                 generateSequence {
                     if (cursor.moveToNext()) cursor.getString(nameIndex) else null
-                }.any { it == "environment" }
+                }.any { it == "morphology" }
             }
-            if (!hasEnvironmentColumn) {
-                database.execSQL("ALTER TABLE samples ADD COLUMN environment TEXT")
+            if (!hasMorphologyColumn) {
+                database.execSQL("ALTER TABLE samples ADD COLUMN morphology TEXT")
+            }
+            
+            val hasTopographyColumn = database.rawQuery("PRAGMA table_info(samples)", null).use { cursor ->
+                val nameIndex = cursor.getColumnIndexOrThrow("name")
+                generateSequence {
+                    if (cursor.moveToNext()) cursor.getString(nameIndex) else null
+                }.any { it == "topography" }
+            }
+            if (!hasTopographyColumn) {
+                database.execSQL("ALTER TABLE samples ADD COLUMN topography TEXT")
             }
         }
     }
@@ -100,7 +111,8 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
         location: Map<String, Any?>?,
         accelerometer: Map<String, Double>?,
         gyroscope: Map<String, Double>?,
-        environment: String?,
+        morphology: String?,
+        topography: String?,
         snapshot: NetworkSnapshot
     ) {
         val database = writableDatabase
@@ -111,7 +123,8 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
                 put("sent", 0)
                 put("operator", snapshot.operator)
                 put("network_type", snapshot.networkType)
-                putNullable("environment", environment)
+                putNullable("morphology", morphology)
+                putNullable("topography", topography)
                 putNullable("latitude", location?.get("latitude"))
                 putNullable("longitude", location?.get("longitude"))
                 putNullable("altitude", location?.get("altitude"))
@@ -225,7 +238,8 @@ class CollectionDatabase(context: Context) : SQLiteOpenHelper(
             }
         }
         val result = JSONObject().put("timestamp", cursor.getLong(cursor.getColumnIndexOrThrow("timestamp")))
-        result.putNullable("environment", text("environment"))
+        result.putNullable("morphology", text("morphology"))
+        result.putNullable("topography", text("topography"))
         result.put("location", JSONObject().apply {
             putNumber("latitude", value("latitude")); putNumber("longitude", value("longitude"))
             putNumber("altitude", value("altitude")); putNumber("accuracy", value("accuracy"))

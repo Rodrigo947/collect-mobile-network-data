@@ -573,6 +573,13 @@
     "@babel/helper-string-parser" "^7.29.7"
     "@babel/helper-validator-identifier" "^7.29.7"
 
+"@carlos3g/element-dropdown@^2.18.1":
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/@carlos3g/element-dropdown/-/element-dropdown-2.18.1.tgz#3ad13db00046e9ff4f0502adb70c4449732b34d5"
+  integrity sha512-engSf10JFMr3QYHzKU78EbCzw4Q49tn+WAybewDmZg9lxc0egF1JSQzDKheYTUArKuIjz5R6/Xu9H50QVLObOA==
+  dependencies:
+    lodash "^4"
+
 "@expo-google-fonts/material-symbols@^0.4.1":
   version "0.4.42"
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/material-symbols/-/material-symbols-0.4.42.tgz#db6c5420b6060aee755ead226dc5dbd431efddf2"
@@ -2805,6 +2812,11 @@ lodash.throttle@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/lodash.throttle/-/lodash.throttle-4.1.1.tgz#c23e91b710242ac70c37f1e1cda9274cc39bf2f4"
   integrity sha512-wIkUCfVKpVsWo3JSZlc+8MB5it+2AN5W8J7YVMST30UrvcQNZ1Okbj+rbVniijTWE6FGYy4XJq/rHkas8qJMLQ==
+
+lodash@^4:
+  version "4.18.1"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.18.1.tgz#ff2b66c1f6326d59513de2407bf881439812771c"
+  integrity sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==
 
 log-symbols@^2.2.0:
   version "2.2.0"

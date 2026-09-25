@@ -79,6 +79,7 @@ export async function registerParticipant(): Promise<RegistrationResponse> {
             }),
         });
     } catch {
+        console.error(`${API_BASE_URL}/participant`);
         throw new Error('Não foi possível conectar à API.');
     }
 

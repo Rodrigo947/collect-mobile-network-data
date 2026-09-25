@@ -53,12 +53,13 @@ class GetNetworkDataModule : Module(), SensorEventListener {
             mapOf("saved" to true)
         }
 
-        AsyncFunction("setEnvironment") { environment: String? ->
+        AsyncFunction("setEnvironment") { morphology: String?, topography: String? ->
             val context = appContext.reactContext
                 ?: throw Exception("React context unavailable")
             context.getSharedPreferences(PARTICIPANT_PREFS, Context.MODE_PRIVATE)
                 .edit()
-                .putString(ENVIRONMENT_KEY, environment?.trim()?.takeIf { it.isNotEmpty() })
+                .putString(MORPHOLOGY_KEY, morphology?.trim()?.takeIf { it.isNotEmpty() })
+                .putString(TOPOGRAPHY_KEY, topography?.trim()?.takeIf { it.isNotEmpty() })
                 .apply()
             mapOf("saved" to true)
         }
@@ -410,6 +411,7 @@ class GetNetworkDataModule : Module(), SensorEventListener {
         const val PARTICIPANT_ID_KEY = "participant_id"
         const val PARTICIPANT_TOKEN_KEY = "participant_token"
         const val API_BASE_URL_KEY = "api_base_url"
-        const val ENVIRONMENT_KEY = "environment"
+        const val MORPHOLOGY_KEY = "morphology"
+        const val TOPOGRAPHY_KEY = "topography"
     }
 }

@@ -20,6 +20,11 @@ export default function useModalInfoStyle() {
             shadowRadius: 4,
             elevation: 5,
         },
+        contentLoading: {
+            justifyContent: 'center',
+            alignItems: 'center',
+            elevation: 4,
+        },
         contentConfirm: {
             marginBottom: 160,
         },
@@ -62,6 +67,10 @@ export default function useModalInfoStyle() {
             marginVertical: 10,
             color: Colors.text,
             padding: 10,
+        },
+        inputPlaceholder: {
+            color: Colors.placeholder,
+            fontSize: Typography.body,
         },
         error: {
             color: Colors.danger,

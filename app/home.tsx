@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import { FontAwesome5 } from '@expo/vector-icons';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
 import AppButton from '../components/buttons/AppButton';
 import LocationCard from '../components/cards/LocationCard';
@@ -12,6 +13,11 @@ import AppHeader from '../components/layout/AppHeader';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import ModalEnvironmentType from '../components/modals/ModalEnvironmentType';
 import ModalInfo from '../components/modals/ModalInfo';
+import ModalLoading from '../components/modals/ModalLoading';
+import {
+    dropdownItem,
+    getEnvironmentData,
+} from '../services/environmentService';
 import {
     getCollectionData,
     getCollectionServiceStatus,
@@ -49,10 +55,22 @@ export default function HomeScreen() {
     const [showModalEnv, setShowModalEnv] = useState(false);
     const [showModalInfo, setShowModalInfo] = useState(false);
     const [modalInfoMessage, setModalInfoMessage] = useState('');
-    const handleModalSetEnvironmentAndStart = async (env: string) => {
+    const [showModalLoading, setShowModalLoading] = useState(false);
+    const [morphologyOptions, setMorphologyOptions] = useState<dropdownItem[]>(
+        [],
+    );
+    const [topographyOptions, setTopographyOptions] = useState<dropdownItem[]>(
+        [],
+    );
+
+    const handleModalSetEnvironmentAndStart = async (
+        morphology: string,
+        topography: string,
+    ) => {
         try {
-            await setEnvironment(env);
+            await setEnvironment(morphology, topography);
             setShowModalEnv(false);
+            await activateKeepAwakeAsync();
             const started = await startCollectionService();
             if (started) {
                 setIsCollecting(true);
@@ -60,6 +78,7 @@ export default function HomeScreen() {
                 setNeighboringCells([]);
             }
         } catch (error) {
+            deactivateKeepAwake();
             setModalInfoMessage(
                 error instanceof Error
                     ? error.message
@@ -76,17 +95,32 @@ export default function HomeScreen() {
     const handleStartCollecting = async () => {
         if (isCollecting) {
             try {
+                setShowModalLoading(true);
                 await stopCollectionService();
-                setIsCollecting(false);
             } catch (error) {
+                setShowModalLoading(false);
                 setModalInfoMessage(
                     error instanceof Error
                         ? error.message
                         : 'Falha ao parar a coleta.',
                 );
                 setShowModalInfo(true);
+            } finally {
+                deactivateKeepAwake();
+                setIsCollecting(false);
+                setShowModalLoading(false);
             }
         } else {
+            if (
+                morphologyOptions.length === 0 ||
+                topographyOptions.length === 0
+            ) {
+                setShowModalLoading(true);
+                const { morphology, topography } = await getEnvironmentData();
+                setMorphologyOptions(morphology);
+                setTopographyOptions(topography);
+                setShowModalLoading(false);
+            }
             setShowModalEnv(true);
         }
     };
@@ -173,8 +207,11 @@ export default function HomeScreen() {
                 iconRightName="gear"
                 onRightPress={handleSettings}
             />
+            <ModalLoading visible={showModalLoading} />
             <ModalEnvironmentType
                 visible={showModalEnv}
+                dataMorphology={morphologyOptions}
+                dataTopography={topographyOptions}
                 onClose={() => setShowModalEnv(false)}
                 onInsert={handleModalSetEnvironmentAndStart}
             />

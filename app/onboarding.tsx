@@ -1,3 +1,4 @@
+import ModalLoading from '@/components/modals/ModalLoading';
 import { useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import {
@@ -67,6 +68,7 @@ export default function OnboardingScreen() {
 
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
+    const [showLoadingModal, setShowLoadingModal] = useState(false);
 
     const lastIndex = DATA.length - 1;
 
@@ -85,15 +87,20 @@ export default function OnboardingScreen() {
             scrollToIndex(currentIndex + 1);
         } else {
             if (isRegistering) return;
+            setShowLoadingModal(true);
 
             setIsRegistering(true);
             try {
                 await registerParticipant();
                 await StorageService.acceptTerms();
+                setShowLoadingModal(false);
                 router.replace('/permissions');
             } catch (error) {
+                setShowLoadingModal(false);
                 setModalMessage(
-                    'Não foi possível registrar o aplicativo. Tente novamente.',
+                    error instanceof Error
+                        ? error.message
+                        : 'Não foi possível registrar o aplicativo. Tente novamente.',
                 );
                 setShowModal(true);
             } finally {
@@ -143,6 +150,7 @@ export default function OnboardingScreen() {
     return (
         <ScreenContainer style={styles.container} showStatusBar={false}>
             <StatusBar barStyle="light-content" />
+            <ModalLoading visible={showLoadingModal} />
             <ModalInfo
                 title={'Aviso'}
                 visible={showModal}

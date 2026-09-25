@@ -12,6 +12,7 @@ import HistoryCard from '../components/cards/HistoryCard';
 import AppHeader from '../components/layout/AppHeader';
 import ScreenContainer from '../components/layout/ScreenContainer';
 import ModalInfo from '../components/modals/ModalInfo';
+import ModalLoading from '../components/modals/ModalLoading';
 import {
     getStoredSampleCount,
     sendStoredSamples,
@@ -39,6 +40,7 @@ export default function HistoryScreen() {
     const [showModal, setShowModal] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
     const [modalMessage, setModalMessage] = useState('');
+    const [showModalLoading, setShowModalLoading] = useState(false);
 
     useEffect(() => {
         fetchSamples(1);
@@ -105,16 +107,21 @@ export default function HistoryScreen() {
                 setShowModal(true);
                 return;
             }
-            setLoading(true);
+            setShowModalLoading(true);
             const sent = await sendStoredSamples();
+            setShowModalLoading(false);
             if (sent) {
+                setLoading(true);
                 setStoredSampleCount(await getStoredSampleCount());
                 await fetchSamples(1);
+                setCurrentPage(1);
                 setModalTitle('Coletas enviadas');
                 setModalMessage('Os dados foram enviados com sucesso.');
                 setShowModal(true);
             }
         } catch (error) {
+            setShowModalLoading(false);
+            setLoading(false);
             setModalTitle('Erro');
             setModalMessage(
                 error instanceof Error
@@ -128,6 +135,7 @@ export default function HistoryScreen() {
     return (
         <ScreenContainer style={styles.container}>
             <AppHeader title="Histórico" showBackButton={true} />
+            <ModalLoading visible={showModalLoading} />
             <ModalInfo
                 title={modalTitle}
                 visible={showModal}
