@@ -62,7 +62,6 @@ class CollectionForegroundService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        runCatching { batchSender.sendAsync() }
         runCatching { sensorManager?.unregisterListener(this) }
         runCatching { locationListener?.let { locationManager?.removeUpdates(it) } }
         runCatching { setRunning(false) }

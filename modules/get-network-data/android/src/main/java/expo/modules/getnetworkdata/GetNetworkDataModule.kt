@@ -113,8 +113,8 @@ class GetNetworkDataModule : Module(), SensorEventListener {
             try {
                 val context = appContext.reactContext
                     ?: throw Exception("React context unavailable")
-                val sendResult = CollectionBatchSender(context).sendWithError()
                 context.stopService(Intent(context, CollectionForegroundService::class.java))
+                val sendResult = CollectionBatchSender(context).sendWithError()
                 context.getSharedPreferences(
                     CollectionForegroundService.STATUS_PREFS,
                     Context.MODE_PRIVATE
